@@ -9,13 +9,24 @@ Para poder utilizar el shell de flask, es necesario declarar la variable de ento
 Para el caso de windows
 ``set FLASK_APP=disnamagerapp.py``
 
-## Arrancar servidor web de flask
+## Arrancar servidor
+Para iniciar el servidor con flask será necesario ejecutar el siguiente comando:
 ``run flask``
 
 ## Base de datos en flask
-Se estará utilizando SQLite para el almacenamiento
+Para el almacenamiento en el backend se estará empleado SQLite. Para ello es necesario realizar la instalación  de flask sqlalchemy que facilitará ésta tarea
 ``pip install flask-sqlalchemy``
 
 ## Migraciones de base de datos
 Para poder realizar cambios en la base de datos  es necesario instalar 
 ``pip install flask-migrate``
+
+## Primera migracion DDBB
+
+Para generar las tablas de las bases de datos una vez declarados en el modelo habrá que introduccir el siguiente comando:
++ Primero hay que crear unr epositorio de migración
+ ``flask db init``
++ Realizar la migración 
+``flask db migrate ``
++ Aplicar los cambios realizados en la migración
+``flask db upgrade``

@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSource name="disManagerApp">
+  <database-model serializer="dbm" dbms="SQLITE" family-id="SQLITE" format-version="4.14">
+    <root id="1">
+      <ServerVersion>3.25.1</ServerVersion>
+    </root>
+    <schema id="2" parent="1" name="main">
+      <Current>1</Current>
+      <Visible>1</Visible>
+    </schema>
+    <collation id="3" parent="1" name="BINARY"/>
+    <collation id="4" parent="1" name="NOCASE"/>
+    <collation id="5" parent="1" name="RTRIM"/>
+    <table id="6" parent="2" name="PDA"/>
+    <table id="7" parent="2" name="alembic_version"/>
+    <table id="8" parent="2" name="area_conocimiento"/>
+    <table id="9" parent="2" name="asignatura"/>
+    <table id="10" parent="2" name="asignatura_area"/>
+    <table id="11" parent="2" name="asignatura_grupo"/>
+    <table id="12" parent="2" name="asignatura_profesor"/>
+    <table id="13" parent="2" name="grupo"/>
+    <table id="14" parent="2" name="profesor"/>
+    <table id="15" parent="2" name="sqlite_master">
+      <System>1</System>
+    </table>
+    <table id="16" parent="2" name="titulacion"/>
+    <column id="17" parent="6" name="id">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="18" parent="6" name="cod_asig">
+      <Position>2</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="19" parent="6" name="estado">
+      <Position>3</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="20" parent="6" name="observaciones">
+      <Position>4</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <index id="21" parent="6" name="sqlite_autoindex_PDA_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>cod_asig</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="22" parent="6">
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <key id="23" parent="6">
+      <ColNames>cod_asig</ColNames>
+      <UnderlyingIndexName>sqlite_autoindex_PDA_1</UnderlyingIndexName>
+    </key>
+    <foreign-key id="24" parent="6">
+      <ColNames>cod_asig</ColNames>
+      <RefTableName>asignatura</RefTableName>
+      <RefColNames>cod_asignatura</RefColNames>
+    </foreign-key>
+    <column id="25" parent="7" name="version_num">
+      <Position>1</Position>
+      <DataType>VARCHAR(32)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <index id="26" parent="7" name="sqlite_autoindex_alembic_version_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>version_num</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="27" parent="7" name="alembic_version_pkc">
+      <ColNames>version_num</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_alembic_version_1</UnderlyingIndexName>
+    </key>
+    <column id="28" parent="8" name="cod_area">
+      <Position>1</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="29" parent="8" name="nombre">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <index id="30" parent="8" name="sqlite_autoindex_area_conocimiento_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>cod_area</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <index id="31" parent="8" name="ix_area_conocimiento_nombre">
+      <ColNames>nombre</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="32" parent="8">
+      <ColNames>cod_area</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_area_conocimiento_1</UnderlyingIndexName>
+    </key>
+    <column id="33" parent="9" name="cod_asignatura">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="34" parent="9" name="cod_titulacion">
+      <Position>2</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="35" parent="9" name="nombre">
+      <Position>3</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="36" parent="9" name="curso">
+      <Position>4</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="37" parent="9" name="cuatrimestre">
+      <Position>5</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="38" parent="9" name="tipo">
+      <Position>6</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <key id="39" parent="9">
+      <ColNames>cod_asignatura</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <foreign-key id="40" parent="9">
+      <ColNames>cod_titulacion</ColNames>
+      <RefTableName>titulacion</RefTableName>
+      <RefColNames>cod_titulacion</RefColNames>
+    </foreign-key>
+    <column id="41" parent="10" name="cod_asig">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="42" parent="10" name="cod_area">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <foreign-key id="43" parent="10">
+      <ColNames>cod_asig</ColNames>
+      <RefTableName>asignatura</RefTableName>
+      <RefColNames>cod_asignatura</RefColNames>
+    </foreign-key>
+    <foreign-key id="44" parent="10">
+      <ColNames>cod_area</ColNames>
+      <RefTableName>areasconocimiento</RefTableName>
+      <RefColNames>cod_area</RefColNames>
+    </foreign-key>
+    <column id="45" parent="11" name="cod_asig">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="46" parent="11" name="cod_grupo">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <foreign-key id="47" parent="11">
+      <ColNames>cod_asig</ColNames>
+      <RefTableName>asignatura</RefTableName>
+      <RefColNames>cod_asignatura</RefColNames>
+    </foreign-key>
+    <foreign-key id="48" parent="11">
+      <ColNames>cod_grupo</ColNames>
+      <RefTableName>grupo</RefTableName>
+      <RefColNames>cod_grupo</RefColNames>
+    </foreign-key>
+    <column id="49" parent="12" name="cod_asig">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <column id="50" parent="12" name="dni">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <foreign-key id="51" parent="12">
+      <ColNames>cod_asig</ColNames>
+      <RefTableName>asignatura</RefTableName>
+      <RefColNames>cod_asignatura</RefColNames>
+    </foreign-key>
+    <foreign-key id="52" parent="12">
+      <ColNames>dni</ColNames>
+      <RefTableName>profesor</RefTableName>
+      <RefColNames>DNI</RefColNames>
+    </foreign-key>
+    <column id="53" parent="13" name="cod_grupo">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="54" parent="13" name="tipo">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <key id="55" parent="13">
+      <ColNames>cod_grupo</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="56" parent="14" name="DNI">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="57" parent="14" name="nombre">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="58" parent="14" name="apellidos">
+      <Position>3</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="59" parent="14" name="tutorias">
+      <Position>4</Position>
+      <DataType>VARCHAR(140)|0s</DataType>
+    </column>
+    <column id="60" parent="14" name="potencial_docente">
+      <Position>5</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="61" parent="14" name="horas_preasignadas">
+      <Position>6</Position>
+      <DataType>INTEGER|0s</DataType>
+    </column>
+    <key id="62" parent="14">
+      <ColNames>DNI</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="63" parent="15" name="type">
+      <Position>1</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="64" parent="15" name="name">
+      <Position>2</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="65" parent="15" name="tbl_name">
+      <Position>3</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="66" parent="15" name="rootpage">
+      <Position>4</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <column id="67" parent="15" name="sql">
+      <Position>5</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="68" parent="16" name="cod_titulacion">
+      <Position>1</Position>
+      <DataType>INTEGER|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="69" parent="16" name="acronimo">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="70" parent="16" name="nombre">
+      <Position>3</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="71" parent="16" name="centro">
+      <Position>4</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="72" parent="16" name="cod_plan">
+      <Position>5</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <column id="73" parent="16" name="cod_especial">
+      <Position>6</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+    </column>
+    <index id="74" parent="16" name="ix_titulacion_acronimo">
+      <ColNames>acronimo</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <index id="75" parent="16" name="ix_titulacion_nombre">
+      <ColNames>nombre</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="76" parent="16">
+      <ColNames>cod_titulacion</ColNames>
+      <Primary>1</Primary>
+    </key>
+  </database-model>
+</dataSource>
