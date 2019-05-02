@@ -62,6 +62,8 @@ class Profesor(db.Model):
     potencial_docente = db.Column(db.String(64))
     horas_preasignadas = db.Column(db.Integer)
 
+    asignados = db.relationship('Imparte', back_populates='profesor')
+
 class Asignado(db.Model):
     __tablename__ = "asignado"
 
@@ -72,6 +74,7 @@ class Asignado(db.Model):
 
     asignatura = db.relationship('Asignatura', back_populates='grupos')
     grupo = db.relationship('Grupo', back_populates='asignaturas')
+    profesor = db.relationship('Imparte', back_populates='asignado')
 
 class Imparte(db.Model):
     __tablename__ = "imparte"
@@ -88,5 +91,8 @@ class Imparte(db.Model):
     __table_args__ = (db.ForeignKeyConstraint([cod_grupo, cod_asignatura],
                                            ['asignado.cod_grupo', 'asignado.cod_asignatura']),
                       {})
+
+    profesor = db.relationship('Profesor', back_populates='asignados')
+    asignado = db.relationship('Asignado', back_populates='profesor')
 
 
