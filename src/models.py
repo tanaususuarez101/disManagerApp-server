@@ -15,6 +15,7 @@ class Asignatura(db.Model):
     cuatrimestre = db.Column(db.Integer)
     tipo = db.Column(db.String(64))
 
+    titulacion = db.relationship('Titulacion', back_populates="asignaturas")
     areasConocimientos = db.relationship('AreaConocimiento', secondary=Tiene, backref="asignatura")
     grupos = db.relationship('Asignado', back_populates="asignatura")
     PDA = db.relationship('PDA', backref='asignatura', lazy='dynamic')
@@ -89,8 +90,7 @@ class Imparte(db.Model):
     confirmado = db.Column(db.Boolean, default=False)
 
     __table_args__ = (db.ForeignKeyConstraint([cod_grupo, cod_asignatura],
-                                           ['asignado.cod_grupo', 'asignado.cod_asignatura']),
-                      {})
+                                           ['asignado.cod_grupo', 'asignado.cod_asignatura']), {})
 
     profesor = db.relationship('Profesor', back_populates='asignados')
     asignado = db.relationship('Asignado', back_populates='profesor')
