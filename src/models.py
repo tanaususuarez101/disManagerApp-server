@@ -1,5 +1,5 @@
 from src import db
-
+from sqlalchemy import exc
 Tiene = db.Table('Tiene', db.metadata,
                             db.Column('cod_asignatura', db.Integer, db.ForeignKey('asignatura.cod_asignatura')),
                             db.Column('cod_area', db.String(64), db.ForeignKey('areaconocimiento.cod_area'))
@@ -20,6 +20,15 @@ class Asignatura(db.Model):
     grupos = db.relationship('Asignado', back_populates="asignatura")
     PDA = db.relationship('PDA', backref='asignatura', lazy='dynamic')
 
+    def addArea(self, area):
+        try:
+            self.areasConocimientos.append(area)
+            db.session.add(self)
+            db.session.commit()
+        except exc.IntegrityError as e:
+            db.session().rollback()
+        return self
+
 class Grupo (db.Model):
     __tablename__ = "grupo"
 
@@ -27,12 +36,30 @@ class Grupo (db.Model):
     tipo = db.Column(db.String(64))
     asignaturas = db.relationship('Asignado', back_populates="grupo")
 
+    def add(self):
+
+        try:
+            db.session.add(self)
+            db.session.commit()
+        except exc.IntegrityError as e:
+            db.session().rollback()
+
+        return self
 class AreaConocimiento(db.Model):
     __tablename__ = "areaconocimiento"
 
     cod_area = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(64), index=True, unique=True)
 
+    def add(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return self
+        except exc.IntegrityError as e:
+            db.session().rollback()
+
+        return self
 class Titulacion(db.Model):
     __tablename__ = "titulacion"
 
@@ -44,6 +71,26 @@ class Titulacion(db.Model):
     cod_especial = db.Column(db.String(64))
 
     asignaturas = db.relationship('Asignatura', backref='Titulacion', lazy='dynamic')
+
+    def add(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return self
+        except exc.IntegrityError as e:
+            db.session().rollback()
+        return self
+
+
+    def addAsignatura(self, asignatura):
+        try:
+            self.asignaturas.append(asignatura)
+            db.session.add(self)
+            db.session.commit()
+            return asignatura
+        except exc.IntegrityError as e:
+            db.session().rollback()
+        return self
 
 class PDA(db.Model):
     __tablename__ = "PDA"
@@ -77,6 +124,14 @@ class Asignado(db.Model):
     grupo = db.relationship('Grupo', back_populates='asignaturas')
     profesor = db.relationship('Imparte', back_populates='asignado')
 
+    def add(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+        except exc.IntegrityError as e:
+            db.session().rollback()
+        return self
+
 class Imparte(db.Model):
     __tablename__ = "imparte"
 
@@ -94,5 +149,4 @@ class Imparte(db.Model):
 
     profesor = db.relationship('Profesor', back_populates='asignados')
     asignado = db.relationship('Asignado', back_populates='profesor')
-
 

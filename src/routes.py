@@ -2,7 +2,7 @@ from src import app
 from src.models import *
 import os
 import openpyxl
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, make_response, Response
 from werkzeug.utils import secure_filename
 
 
@@ -35,7 +35,7 @@ def upload_file():
             file.save(dir_filename)
             resp = open_file(dir_filename)
             os.remove(dir_filename)
-            return resp
+            return Response(status=200)
 
     return '''
     <!doctype html>
@@ -49,47 +49,57 @@ def upload_file():
 
 def open_file(dir_filename=None):
 
-
     doc = openpyxl.load_workbook(dir_filename)
     hoja = doc.get_sheet_by_name('Hoja1')
 
-    datos = []
     for row in hoja.rows:
-        reg = []
-        for i in range(0, 19):
-            reg.append(row[i].value)
-        datos.append(reg)
+        if row[0].value and type(row[0].value) is not str:
 
-    for row in hoja.rows:
+            titulacion = Titulacion.query.get(row[1].value)
+            if titulacion is None:
+                titulacion = Titulacion(
+                    cod_titulacion=row[1].value,
+                    cod_plan=row[2].value,
+                    cod_especial=row[3].value,
+                    acronimo=row[4].value,
+                    nombre=row[5].value,
+                    centro=row[6].value
+                ).add()
+                print("titulacion añadida: " + titulacion.nombre)
 
-        print(type(row[0].value) is not str)
-        if type(row[0].value) is not str:
-            titulacion = Titulacion(cod_titulacion=row[1].value,
-                                    cod_plan=row[2].value,
-                                    cod_especial=row[3].value,
-                                    acronimo=row[4].value,
-                                    nombre=row[5].value,
-                                    centro=row[6].value)
-            asignatura = Asignatura(cod_asignatura=row[7].value,
-                                    nombre=row[8].value,
-                                    curso=row[9].value,
-                                    cuatrimestre=row[10].value,
-                                    tipo=row[11].value)
+            grupo = Grupo.query.get(row[12].value)
+            if grupo is None:
+                grupo = Grupo(
+                    cod_grupo=row[12].value,
+                    tipo=row[13].value
+                ).add()
+                print("Grupo añadido")
 
-            grupo = Grupo(cod_grupo=row[12].value,
-                          tipo=row[13].value)
+            area = AreaConocimiento.query.get(row[16].value)
+            if area is None:
+                area = AreaConocimiento(
+                    cod_area=row[16].value,
+                    nombre=row[17].value
+                ).add()
+                print('Area conocimiento añadida:' + area.nombre)
+
+            asignatura = Asignatura.query.get(row[7].value)
+            if asignatura is None:
+                asignatura = Asignatura(
+                        cod_asignatura=row[7].value,
+                        nombre=row[8].value,
+                        curso=row[9].value,
+                        cuatrimestre=row[10].value,
+                        tipo=row[11].value
+                )
+                print("Asignatura añadida: " + asignatura.nombre)
+
+            asignatura = titulacion.addAsignatura(asignatura)
+            asignatura.addArea(area)
             asignado = Asignado(num_horas=row[15].value)
-            area = AreaConocimiento(cod_area=row[16].value,
-                                    nombre=row[17].value)
-
-            titulacion.asignaturas.append(asignatura)
-            asignatura.areasConocimientos.append(area)
             asignado.grupo = grupo
             asignado.asignatura = asignatura
+            asignado.add()
 
-            try:
-                db.session.add(asignado, titulacion)
-                db.session.commit()
-                return 'Dato Guardado'
-            except Exception as ex:
-                return "Ha habido un error al guardar el dato"
+
+    return 'Dato guardo'
