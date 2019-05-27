@@ -1,9 +1,53 @@
 from src import db
-from sqlalchemy import exc
+from sqlalchemy.exc import IntegrityError
+
 Tiene = db.Table('Tiene', db.metadata,
                             db.Column('cod_asignatura', db.Integer, db.ForeignKey('asignatura.cod_asignatura')),
                             db.Column('cod_area', db.String(64), db.ForeignKey('areaconocimiento.cod_area'))
                            )
+
+class Titulacion(db.Model):
+    __tablename__ = "titulacion"
+
+    cod_titulacion = db.Column(db.Integer, primary_key=True)
+    acronimo = db.Column(db.String(64), index=True, unique=True)
+    nombre = db.Column(db.String(64), index=True, unique=True)
+    centro = db.Column(db.String(64))
+    cod_plan = db.Column(db.String(64))
+    cod_especial = db.Column(db.String(64))
+
+    asignaturas = db.relationship('Asignatura', backref='Titulacion', lazy='dynamic')
+
+    def __init__(self, universityDegreeCode=None, planCode=None, specialtyCode=None, acronym=None,
+                 name=None, studyCenter=None):
+
+        self.cod_titulacion = universityDegreeCode
+        self.cod_plan = planCode
+        self.cod_especial = specialtyCode
+        self.acronimo = acronym
+        self.nombre = name
+        self.centro = studyCenter
+
+    def __repr__(self):
+        return '<Titulacion {}, {}>'.format(self.cod_titulacion, self.nombre)
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def get(universityDegreeCode=None):
+        if universityDegreeCode:
+            return Titulacion.query.get(universityDegreeCode)
+
+    def add_subject(self, subject=None):
+        if subject:
+            self.asignaturas.append(subject)
 
 class Asignatura(db.Model):
     __tablename__ = "asignatura"
@@ -20,14 +64,44 @@ class Asignatura(db.Model):
     grupos = db.relationship('Asignado', back_populates="asignatura")
     PDA = db.relationship('PDA', backref='asignatura', lazy='dynamic')
 
-    def addArea(self, area):
+
+    def __init__(self, subject_code=None, name=None, semester=None,academic_year=None, type=None):
+
+        self.cod_asignatura = subject_code
+        self.nombre = name
+        self.curso = academic_year
+        self.cuatrimestre = semester
+        self.tipo = type
+
+    def __repr__(self):
+        return '<Asignatura {}, {}>'.format(self.cod_asignatura, self.nombre)
+
+    def save(self):
         try:
-            self.areasConocimientos.append(area)
             db.session.add(self)
             db.session.commit()
-        except exc.IntegrityError as e:
-            db.session().rollback()
-        return self
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def get(subject=None):
+        if subject:
+            return Asignatura.query.get(subject)
+
+    def create_relactionship(self, area=None, university_degree=None, PDA=None):
+
+
+        if area:
+            self.areasConocimientos.append(area)
+        if university_degree:
+            self.titulacion = university_degree
+        if PDA:
+            self.PDA = PDA
+
+    def getId(self):
+        return self.cod_asignatura
 
 class Grupo (db.Model):
     __tablename__ = "grupo"
@@ -36,61 +110,60 @@ class Grupo (db.Model):
     tipo = db.Column(db.String(64))
     asignaturas = db.relationship('Asignado', back_populates="grupo")
 
-    def add(self):
+    def __init__(self, group_code=None, type=None):
 
+        self.cod_grupo = group_code
+        self.tipo = type
+
+    def save(self):
         try:
             db.session.add(self)
             db.session.commit()
-        except exc.IntegrityError as e:
-            db.session().rollback()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
 
-        return self
+    @staticmethod
+    def get(group=None):
+        if group:
+            return Grupo.query.get(group)
+
+    @staticmethod
+    def add(data=[]):
+        if len(data) == 2:
+            grupo = Grupo.query.get(data[0])
+            if not grupo:
+                grupo = Grupo(cod_grupo=data[0], tipo=data[1])
+                db.session.add(grupo)
+                db.session.commit()
+            return grupo
+
+    def getId(self):
+        return self.cod_grupo
+
 class AreaConocimiento(db.Model):
     __tablename__ = "areaconocimiento"
 
     cod_area = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(64), index=True, unique=True)
 
-    def add(self):
+    def __init__(self, area_code=None, name=None):
+        self.cod_area = area_code
+        self.nombre = name
+
+    def save(self):
         try:
             db.session.add(self)
             db.session.commit()
-            return self
-        except exc.IntegrityError as e:
-            db.session().rollback()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
 
-        return self
-class Titulacion(db.Model):
-    __tablename__ = "titulacion"
-
-    cod_titulacion = db.Column(db.Integer, primary_key=True)
-    acronimo = db.Column(db.String(64), index=True, unique=True)
-    nombre = db.Column(db.String(64), index=True, unique=True)
-    centro = db.Column(db.String(64))
-    cod_plan = db.Column(db.String(64))
-    cod_especial = db.Column(db.String(64))
-
-    asignaturas = db.relationship('Asignatura', backref='Titulacion', lazy='dynamic')
-
-    def add(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return self
-        except exc.IntegrityError as e:
-            db.session().rollback()
-        return self
-
-
-    def addAsignatura(self, asignatura):
-        try:
-            self.asignaturas.append(asignatura)
-            db.session.add(self)
-            db.session.commit()
-            return asignatura
-        except exc.IntegrityError as e:
-            db.session().rollback()
-        return self
+    def get(area=None):
+        if area:
+            return AreaConocimiento.query.get(area)
 
 class PDA(db.Model):
     __tablename__ = "PDA"
@@ -124,13 +197,24 @@ class Asignado(db.Model):
     grupo = db.relationship('Grupo', back_populates='asignaturas')
     profesor = db.relationship('Imparte', back_populates='asignado')
 
-    def add(self):
+    def __init__(self, hours_numbers=None, schedule=None):
+        self.num_horas = hours_numbers
+        self.horario = schedule
+
+    def save(self):
         try:
             db.session.add(self)
             db.session.commit()
-        except exc.IntegrityError as e:
-            db.session().rollback()
-        return self
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def get(subject=None, group=None):
+        if subject and group:
+            return Asignado.query.get([group.getId(), subject.getId()])
+
 
 class Imparte(db.Model):
     __tablename__ = "imparte"
