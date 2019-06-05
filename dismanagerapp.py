@@ -1,19 +1,18 @@
 from src import app, db
-#from src.models import Titulacion, Asignatura, PDA, Grupo, Profesor, AreaConocimiento, Imparte, Tiene, Asignado
-from src.models import Asignatura,  Grupo,  AreaConocimiento, Tiene, Asignado, Titulacion, PDA, Profesor, Imparte
+from src.models import Subjects,  Groups,  KnowledgeAreas, Give, Assigned, UniversityDegrees, PDA, Teachers, Have
 
 @app.shell_context_processor
 def make_shell_context():
     return {'db': db,
-            'Titulacion': Titulacion,
-            'Asignatura': Asignatura,
+            'UniversityDegrees': UniversityDegrees,
+            'Subjects': Subjects,
             'PDA': PDA,
-            'Grupo':Grupo,
-            'Profesor': Profesor,
-            'AreaConocimiento': AreaConocimiento,
-            "Imparte": Imparte,
-            "Tiene": Tiene,
-            "Asignado": Asignado
+            'Groups': Groups,
+            'Teachers': Teachers,
+            'AreaKnowledge': KnowledgeAreas,
+            "Have": Have,
+            "Give": Give,
+            "Assigned": Assigned
             }
 
 

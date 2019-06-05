@@ -1,35 +1,36 @@
 from src import db
 from sqlalchemy.exc import IntegrityError
 
-Tiene = db.Table('Tiene', db.metadata,
-                            db.Column('cod_asignatura', db.Integer, db.ForeignKey('asignatura.cod_asignatura')),
-                            db.Column('cod_area', db.String(64), db.ForeignKey('areaconocimiento.cod_area'))
-                           )
+Have = db.Table('Have', db.metadata,
+                 db.Column('subject_cod', db.Integer, db.ForeignKey('subjects.subject_cod')),
+                 db.Column('area_cod', db.String(64), db.ForeignKey('knowledgeAreas.area_cod'))
+                 )
 
-class Titulacion(db.Model):
-    __tablename__ = "titulacion"
 
-    cod_titulacion = db.Column(db.Integer, primary_key=True)
-    acronimo = db.Column(db.String(64), index=True, unique=True)
-    nombre = db.Column(db.String(64), index=True, unique=True)
-    centro = db.Column(db.String(64))
-    cod_plan = db.Column(db.String(64))
-    cod_especial = db.Column(db.String(64))
+class UniversityDegrees(db.Model):
+    __tablename__ = "universityDegrees"
 
-    asignaturas = db.relationship('Asignatura', backref='Titulacion', lazy='dynamic')
+    university_degree_cod = db.Column(db.Integer, primary_key=True)
+    acronym = db.Column(db.String(64), index=True, unique=True)
+    name = db.Column(db.String(64), index=True, unique=True)
+    study_center = db.Column(db.String(64))
+    plan_cod = db.Column(db.String(64))
+    special_cod = db.Column(db.String(64))
 
-    def __init__(self, universityDegreeCode=None, planCode=None, specialtyCode=None, acronym=None,
-                 name=None, studyCenter=None):
+    subjects = db.relationship('Subjects', backref='UniversityDegrees', lazy='dynamic')
 
-        self.cod_titulacion = universityDegreeCode
-        self.cod_plan = planCode
-        self.cod_especial = specialtyCode
-        self.acronimo = acronym
-        self.nombre = name
-        self.centro = studyCenter
+    def __init__(self, university_degree_cod=None, plan_code=None, specialty_cod=None, acronym=None,
+                 name=None, study_center=None):
+
+        self.university_degree_cod = university_degree_cod
+        self.plan_cod = plan_code
+        self.special_cod = specialty_cod
+        self.acronym = acronym
+        self.name = name
+        self.study_center = study_center
 
     def __repr__(self):
-        return '<Titulacion {}, {}>'.format(self.cod_titulacion, self.nombre)
+        return '<Titulacion {}, {}>'.format(self.university_degree_cod, self.name)
 
     def save(self):
         try:
@@ -41,40 +42,43 @@ class Titulacion(db.Model):
             return False
 
     @staticmethod
-    def get(universityDegreeCode=None):
-        if universityDegreeCode:
-            return Titulacion.query.get(universityDegreeCode)
+    def get(university_degree_cod=None):
+        if university_degree_cod:
+            return UniversityDegrees.query.get(university_degree_cod)
 
     def add_subject(self, subject=None):
         if subject:
-            self.asignaturas.append(subject)
+            self.subjects.append(subject)
 
-class Asignatura(db.Model):
-    __tablename__ = "asignatura"
-
-    cod_asignatura = db.Column(db.Integer, primary_key=True)
-    cod_titulacion = db.Column(db.Integer, db.ForeignKey('titulacion.cod_titulacion'))
-    nombre = db.Column(db.String(64))
-    curso = db.Column(db.Integer)
-    cuatrimestre = db.Column(db.Integer)
-    tipo = db.Column(db.String(64))
-
-    titulacion = db.relationship('Titulacion', back_populates="asignaturas")
-    areasConocimientos = db.relationship('AreaConocimiento', secondary=Tiene, backref="asignatura")
-    grupos = db.relationship('Asignado', back_populates="asignatura")
-    PDA = db.relationship('PDA', backref='asignatura', lazy='dynamic')
+    @staticmethod
+    def get_all():
+        return UniversityDegrees.query.all()
 
 
-    def __init__(self, subject_code=None, name=None, semester=None,academic_year=None, type=None):
+class Subjects(db.Model):
+    __tablename__ = "subjects"
 
-        self.cod_asignatura = subject_code
-        self.nombre = name
-        self.curso = academic_year
-        self.cuatrimestre = semester
-        self.tipo = type
+    subject_cod = db.Column(db.Integer, primary_key=True)
+    university_degree_code = db.Column(db.Integer, db.ForeignKey('universityDegrees.university_degree_cod'))
+    name = db.Column(db.String(64))
+    course = db.Column(db.Integer)
+    semester = db.Column(db.Integer)
+    type = db.Column(db.String(64))
+
+    universityDegrees = db.relationship('UniversityDegrees', back_populates="subjects")
+    knowledge_areas = db.relationship('KnowledgeAreas', secondary=Have, backref="subjects")
+    groups = db.relationship('Assigned', back_populates="subjects")
+    PDA = db.relationship('PDA', backref='subjects', lazy='dynamic')
+
+    def __init__(self, subject_cod=None, name=None, semester=None, academic_year=None, type=None):
+        self.subject_cod = subject_cod
+        self.name = name
+        self.course = academic_year
+        self.semestre = semester
+        self.type = type
 
     def __repr__(self):
-        return '<Asignatura {}, {}>'.format(self.cod_asignatura, self.nombre)
+        return '<Asignatura {}, {}>'.format(self.subjects_cod, self.name)
 
     def save(self):
         try:
@@ -88,32 +92,28 @@ class Asignatura(db.Model):
     @staticmethod
     def get(subject=None):
         if subject:
-            return Asignatura.query.get(subject)
+            return Subjects.query.get(subject)
 
-    def create_relactionship(self, area=None, university_degree=None, PDA=None):
+    def get_cod(self):
+        return self.subjects_cod
+
+    @staticmethod
+    def get_all():
+        return Subjects.query.all()
 
 
-        if area:
-            self.areasConocimientos.append(area)
-        if university_degree:
-            self.titulacion = university_degree
-        if PDA:
-            self.PDA = PDA
 
-    def getId(self):
-        return self.cod_asignatura
+class Groups(db.Model):
+    __tablename__ = "groups"
 
-class Grupo (db.Model):
-    __tablename__ = "grupo"
-
-    cod_grupo = db.Column(db.Integer, primary_key=True)
-    tipo = db.Column(db.String(64))
-    asignaturas = db.relationship('Asignado', back_populates="grupo")
+    group_cod = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(64))
+    subjects = db.relationship('Assigned', back_populates="groups")
 
     def __init__(self, group_code=None, type=None):
 
-        self.cod_grupo = group_code
-        self.tipo = type
+        self.group_cod = group_code
+        self.type = type
 
     def save(self):
         try:
@@ -125,32 +125,20 @@ class Grupo (db.Model):
             return False
 
     @staticmethod
-    def get(group=None):
-        if group:
-            return Grupo.query.get(group)
+    def get(group_id=None):
+        if group_id:
+            return Groups.query.get(group_id)
 
-    @staticmethod
-    def add(data=[]):
-        if len(data) == 2:
-            grupo = Grupo.query.get(data[0])
-            if not grupo:
-                grupo = Grupo(cod_grupo=data[0], tipo=data[1])
-                db.session.add(grupo)
-                db.session.commit()
-            return grupo
 
-    def getId(self):
-        return self.cod_grupo
+class KnowledgeAreas(db.Model):
+    __tablename__ = "knowledgeAreas"
 
-class AreaConocimiento(db.Model):
-    __tablename__ = "areaconocimiento"
+    area_cod = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), index=True, unique=True)
 
-    cod_area = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(64), index=True, unique=True)
-
-    def __init__(self, area_code=None, name=None):
-        self.cod_area = area_code
-        self.nombre = name
+    def __init__(self, area_cod=None, name=None):
+        self.area_cod = area_cod
+        self.name = name
 
     def save(self):
         try:
@@ -161,45 +149,48 @@ class AreaConocimiento(db.Model):
             db.session.rollback()
             return False
 
-    def get(area=None):
-        if area:
-            return AreaConocimiento.query.get(area)
+    def get(area_cod=None):
+        if area_cod:
+            return KnowledgeAreas.query.get(area_cod)
+
 
 class PDA(db.Model):
     __tablename__ = "PDA"
 
     id = db.Column(db.Integer, primary_key=True)
-    cod_asig = db.Column(db.Integer, db.ForeignKey('asignatura.cod_asignatura'), unique=True)
-    estado = db.Column(db.String(64))
-    observaciones = db.Column(db.String(64))
+    subject_cod = db.Column(db.Integer, db.ForeignKey('subjects.subject_cod'), unique=True)
+    status = db.Column(db.String(64))
+    observations = db.Column(db.String(128))
 
-class Profesor(db.Model):
-    __tablename__ = "profesor"
+
+class Teachers(db.Model):
+    __tablename__ = "teachers"
 
     DNI = db.Column(db.String(64), primary_key=True)
-    nombre = db.Column(db.String(64))
-    apellidos = db.Column(db.String(64))
-    tutorias = db.Column(db.String(140))
-    potencial_docente = db.Column(db.String(64))
-    horas_preasignadas = db.Column(db.Integer)
+    name = db.Column(db.String(64))
+    surnames = db.Column(db.String(64))
+    tutorial = db.Column(db.String(140))
+    potential_teaching = db.Column(db.String(64))
+    preassigned_hours = db.Column(db.Integer)
 
-    asignados = db.relationship('Imparte', back_populates='profesor')
+    assigned = db.relationship('Give', back_populates='teachers')
 
-class Asignado(db.Model):
-    __tablename__ = "asignado"
 
-    cod_grupo = db.Column(db.Integer, db.ForeignKey('grupo.cod_grupo'), primary_key=True)
-    cod_asignatura = db.Column(db.Integer, db.ForeignKey('asignatura.cod_asignatura'), primary_key=True)
-    num_horas = db.Column(db.Integer)
-    horario = db.Column(db.String(140))
+class Assigned(db.Model):
+    __tablename__ = "assigned"
 
-    asignatura = db.relationship('Asignatura', back_populates='grupos')
-    grupo = db.relationship('Grupo', back_populates='asignaturas')
-    profesor = db.relationship('Imparte', back_populates='asignado')
+    group_cod = db.Column(db.Integer, db.ForeignKey('groups.group_cod'), primary_key=True)
+    subject_cod = db.Column(db.Integer, db.ForeignKey('subjects.subject_cod'), primary_key=True)
+    number_hours = db.Column(db.Integer)
+    study_hours = db.Column(db.String(140))
 
-    def __init__(self, hours_numbers=None, schedule=None):
-        self.num_horas = hours_numbers
-        self.horario = schedule
+    subjects = db.relationship('Subjects', back_populates='groups')
+    groups = db.relationship('Groups', back_populates='subjects')
+    teachers = db.relationship('Give', back_populates='assigned')
+
+    def __init__(self, hours_numbers=None, study_hours=None):
+        self.number_hours = hours_numbers
+        self.study_hours = study_hours
 
     def save(self):
         try:
@@ -213,24 +204,32 @@ class Asignado(db.Model):
     @staticmethod
     def get(subject=None, group=None):
         if subject and group:
-            return Asignado.query.get([group.getId(), subject.getId()])
+            return Assigned.query.get([group.group_cod, subject.subject_cod])
+
+    @staticmethod
+    def get_subject_relationship(subject=None):
+        if subject:
+            return Assigned.query.filter_by(subject_cod=subject.subject_cod).all()
+
+    @staticmethod
+    def get_all():
+        return Assigned.query.all()
 
 
-class Imparte(db.Model):
-    __tablename__ = "imparte"
+class Give(db.Model):
+    __tablename__ = "give"
 
-    DNI = db.Column(db.String(64), db.ForeignKey('profesor.DNI'), primary_key=True)
-    cod_grupo = db.Column(db.Integer, primary_key=True)
-    cod_asignatura = db.Column(db.Integer, primary_key=True)
+    DNI = db.Column(db.String(64), db.ForeignKey('teachers.DNI'), primary_key=True)
+    group_cod = db.Column(db.Integer, primary_key=True)
+    subject_cod = db.Column(db.Integer, primary_key=True)
 
     coor_asignatura = db.Column(db.Boolean, default=False)
     respon_practica = db.Column(db.Boolean, default=False)
     venia = db.Column(db.Boolean, default=False)
     confirmado = db.Column(db.Boolean, default=False)
 
-    __table_args__ = (db.ForeignKeyConstraint([cod_grupo, cod_asignatura],
-                                           ['asignado.cod_grupo', 'asignado.cod_asignatura']), {})
+    __table_args__ = (db.ForeignKeyConstraint([group_cod, subject_cod],
+                                              ['assigned.group_cod', 'assigned.subject_cod']), {})
 
-    profesor = db.relationship('Profesor', back_populates='asignados')
-    asignado = db.relationship('Asignado', back_populates='profesor')
-
+    teachers = db.relationship('Teachers', back_populates='assigned')
+    assigned = db.relationship('Assigned', back_populates='teachers')
