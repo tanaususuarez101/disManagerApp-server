@@ -11,359 +11,195 @@
     <collation id="3" parent="1" name="BINARY"/>
     <collation id="4" parent="1" name="NOCASE"/>
     <collation id="5" parent="1" name="RTRIM"/>
-    <table id="6" parent="2" name="Have"/>
-    <table id="7" parent="2" name="PDA"/>
-    <table id="8" parent="2" name="alembic_version"/>
-    <table id="9" parent="2" name="assigned"/>
-    <table id="10" parent="2" name="give"/>
-    <table id="11" parent="2" name="groups"/>
-    <table id="12" parent="2" name="knowledgeAreas"/>
-    <table id="13" parent="2" name="sqlite_master">
+    <table id="6" parent="2" name="alembic_version"/>
+    <table id="7" parent="2" name="group"/>
+    <table id="8" parent="2" name="impart"/>
+    <table id="9" parent="2" name="sqlite_master">
       <System>1</System>
     </table>
-    <table id="14" parent="2" name="subjects"/>
-    <table id="15" parent="2" name="teachers"/>
-    <table id="16" parent="2" name="universityDegrees"/>
-    <column id="17" parent="6" name="subject_cod">
-      <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
-    </column>
-    <column id="18" parent="6" name="area_cod">
-      <Position>2</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <foreign-key id="19" parent="6">
-      <ColNames>subject_cod</ColNames>
-      <RefTableName>subjects</RefTableName>
-      <RefColNames>subject_cod</RefColNames>
-    </foreign-key>
-    <foreign-key id="20" parent="6">
-      <ColNames>area_cod</ColNames>
-      <RefTableName>KnowledgeAreas</RefTableName>
-      <RefColNames>area_cod</RefColNames>
-    </foreign-key>
-    <column id="21" parent="7" name="id">
-      <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="22" parent="7" name="subject_cod">
-      <Position>2</Position>
-      <DataType>INTEGER|0s</DataType>
-    </column>
-    <column id="23" parent="7" name="status">
-      <Position>3</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <column id="24" parent="7" name="observations">
-      <Position>4</Position>
-      <DataType>VARCHAR(128)|0s</DataType>
-    </column>
-    <index id="25" parent="7" name="sqlite_autoindex_PDA_1">
-      <NameSurrogate>1</NameSurrogate>
-      <ColNames>subject_cod</ColNames>
-      <ColumnCollations></ColumnCollations>
-      <Unique>1</Unique>
-    </index>
-    <key id="26" parent="7">
-      <ColNames>id</ColNames>
-      <Primary>1</Primary>
-    </key>
-    <key id="27" parent="7">
-      <ColNames>subject_cod</ColNames>
-      <UnderlyingIndexName>sqlite_autoindex_PDA_1</UnderlyingIndexName>
-    </key>
-    <foreign-key id="28" parent="7">
-      <ColNames>subject_cod</ColNames>
-      <RefTableName>subjects</RefTableName>
-      <RefColNames>subject_cod</RefColNames>
-    </foreign-key>
-    <column id="29" parent="8" name="version_num">
+    <table id="10" parent="2" name="subject"/>
+    <table id="11" parent="2" name="teacher"/>
+    <column id="12" parent="6" name="version_num">
       <Position>1</Position>
       <DataType>VARCHAR(32)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <index id="30" parent="8" name="sqlite_autoindex_alembic_version_1">
+    <index id="13" parent="6" name="sqlite_autoindex_alembic_version_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>version_num</ColNames>
       <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
-    <key id="31" parent="8" name="alembic_version_pkc">
+    <key id="14" parent="6" name="alembic_version_pkc">
       <ColNames>version_num</ColNames>
       <Primary>1</Primary>
       <UnderlyingIndexName>sqlite_autoindex_alembic_version_1</UnderlyingIndexName>
     </key>
-    <column id="32" parent="9" name="group_cod">
-      <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="33" parent="9" name="subject_cod">
-      <Position>2</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="34" parent="9" name="number_hours">
-      <Position>3</Position>
-      <DataType>INTEGER|0s</DataType>
-    </column>
-    <column id="35" parent="9" name="study_hours">
-      <Position>4</Position>
-      <DataType>VARCHAR(140)|0s</DataType>
-    </column>
-    <index id="36" parent="9" name="sqlite_autoindex_assigned_1">
-      <NameSurrogate>1</NameSurrogate>
-      <ColNames>group_cod
-subject_cod</ColNames>
-      <ColumnCollations></ColumnCollations>
-      <Unique>1</Unique>
-    </index>
-    <key id="37" parent="9">
-      <ColNames>group_cod
-subject_cod</ColNames>
-      <Primary>1</Primary>
-      <UnderlyingIndexName>sqlite_autoindex_assigned_1</UnderlyingIndexName>
-    </key>
-    <foreign-key id="38" parent="9">
-      <ColNames>group_cod</ColNames>
-      <RefTableName>groups</RefTableName>
-      <RefColNames>group_cod</RefColNames>
-    </foreign-key>
-    <foreign-key id="39" parent="9">
-      <ColNames>subject_cod</ColNames>
-      <RefTableName>subjects</RefTableName>
-      <RefColNames>subject_cod</RefColNames>
-    </foreign-key>
-    <column id="40" parent="10" name="DNI">
+    <column id="15" parent="7" name="group_cod">
       <Position>1</Position>
       <DataType>VARCHAR(64)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="41" parent="10" name="group_cod">
+    <column id="16" parent="7" name="subject_cod">
       <Position>2</Position>
-      <DataType>INTEGER|0s</DataType>
+      <DataType>VARCHAR(64)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="42" parent="10" name="subject_cod">
+    <column id="17" parent="7" name="type">
       <Position>3</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
+      <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="43" parent="10" name="coor_asignatura">
+    <column id="18" parent="7" name="hours">
       <Position>4</Position>
-      <DataType>BOOLEAN|0s</DataType>
+      <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="44" parent="10" name="respon_practica">
-      <Position>5</Position>
-      <DataType>BOOLEAN|0s</DataType>
-    </column>
-    <column id="45" parent="10" name="venia">
-      <Position>6</Position>
-      <DataType>BOOLEAN|0s</DataType>
-    </column>
-    <column id="46" parent="10" name="confirmado">
-      <Position>7</Position>
-      <DataType>BOOLEAN|0s</DataType>
-    </column>
-    <index id="47" parent="10" name="sqlite_autoindex_give_1">
+    <index id="19" parent="7" name="sqlite_autoindex_group_1">
       <NameSurrogate>1</NameSurrogate>
-      <ColNames>DNI
-group_cod
+      <ColNames>group_cod
 subject_cod</ColNames>
       <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
-    <key id="48" parent="10">
-      <ColNames>DNI
-group_cod
-subject_cod</ColNames>
-      <Primary>1</Primary>
-      <UnderlyingIndexName>sqlite_autoindex_give_1</UnderlyingIndexName>
-    </key>
-    <foreign-key id="49" parent="10">
-      <ColNames>DNI</ColNames>
-      <RefTableName>teachers</RefTableName>
-      <RefColNames>DNI</RefColNames>
-    </foreign-key>
-    <foreign-key id="50" parent="10">
+    <key id="20" parent="7">
       <ColNames>group_cod
 subject_cod</ColNames>
-      <RefTableName>assigned</RefTableName>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_group_1</UnderlyingIndexName>
+    </key>
+    <foreign-key id="21" parent="7">
+      <ColNames>subject_cod</ColNames>
+      <RefTableName>subject</RefTableName>
+      <RefColNames>subject_cod</RefColNames>
+    </foreign-key>
+    <column id="22" parent="8" name="group_cod">
+      <Position>1</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="23" parent="8" name="subject_cod">
+      <Position>2</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="24" parent="8" name="teacher_dni">
+      <Position>3</Position>
+      <DataType>VARCHAR(64)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <index id="25" parent="8" name="sqlite_autoindex_impart_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>group_cod
+subject_cod
+teacher_dni</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="26" parent="8">
+      <ColNames>group_cod
+subject_cod
+teacher_dni</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_impart_1</UnderlyingIndexName>
+    </key>
+    <foreign-key id="27" parent="8">
+      <ColNames>group_cod
+subject_cod</ColNames>
+      <RefTableName>group</RefTableName>
       <RefColNames>group_cod
 subject_cod</RefColNames>
     </foreign-key>
-    <check id="51" parent="10">
-      <Predicate>confirmado IN (0, 1)</Predicate>
-    </check>
-    <check id="52" parent="10">
-      <Predicate>coor_asignatura IN (0, 1)</Predicate>
-    </check>
-    <check id="53" parent="10">
-      <Predicate>respon_practica IN (0, 1)</Predicate>
-    </check>
-    <check id="54" parent="10">
-      <Predicate>venia IN (0, 1)</Predicate>
-    </check>
-    <column id="55" parent="11" name="group_cod">
-      <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="56" parent="11" name="type">
-      <Position>2</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <key id="57" parent="11">
-      <ColNames>group_cod</ColNames>
-      <Primary>1</Primary>
-    </key>
-    <column id="58" parent="12" name="area_cod">
-      <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="59" parent="12" name="name">
-      <Position>2</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <index id="60" parent="12" name="ix_knowledgeAreas_name">
-      <ColNames>name</ColNames>
-      <ColumnCollations></ColumnCollations>
-      <Unique>1</Unique>
-    </index>
-    <key id="61" parent="12">
-      <ColNames>area_cod</ColNames>
-      <Primary>1</Primary>
-    </key>
-    <column id="62" parent="13" name="type">
+    <foreign-key id="28" parent="8">
+      <ColNames>teacher_dni</ColNames>
+      <RefTableName>teacher</RefTableName>
+      <RefColNames>dni</RefColNames>
+    </foreign-key>
+    <column id="29" parent="9" name="type">
       <Position>1</Position>
       <DataType>text|0s</DataType>
     </column>
-    <column id="63" parent="13" name="name">
+    <column id="30" parent="9" name="name">
       <Position>2</Position>
       <DataType>text|0s</DataType>
     </column>
-    <column id="64" parent="13" name="tbl_name">
+    <column id="31" parent="9" name="tbl_name">
       <Position>3</Position>
       <DataType>text|0s</DataType>
     </column>
-    <column id="65" parent="13" name="rootpage">
+    <column id="32" parent="9" name="rootpage">
       <Position>4</Position>
       <DataType>int|0s</DataType>
     </column>
-    <column id="66" parent="13" name="sql">
+    <column id="33" parent="9" name="sql">
       <Position>5</Position>
       <DataType>text|0s</DataType>
     </column>
-    <column id="67" parent="14" name="subject_cod">
+    <column id="34" parent="10" name="subject_cod">
       <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
+      <DataType>VARCHAR(64)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="68" parent="14" name="university_degree_code">
+    <column id="35" parent="10" name="year_academy">
       <Position>2</Position>
-      <DataType>INTEGER|0s</DataType>
+      <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="69" parent="14" name="name">
+    <column id="36" parent="10" name="name">
       <Position>3</Position>
       <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="70" parent="14" name="course">
+    <column id="37" parent="10" name="course">
       <Position>4</Position>
-      <DataType>INTEGER|0s</DataType>
+      <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="71" parent="14" name="semester">
+    <column id="38" parent="10" name="semester">
       <Position>5</Position>
-      <DataType>INTEGER|0s</DataType>
+      <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="72" parent="14" name="type">
+    <column id="39" parent="10" name="type">
       <Position>6</Position>
       <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <key id="73" parent="14">
+    <index id="40" parent="10" name="sqlite_autoindex_subject_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>subject_cod</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="41" parent="10">
       <ColNames>subject_cod</ColNames>
       <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_subject_1</UnderlyingIndexName>
     </key>
-    <foreign-key id="74" parent="14">
-      <ColNames>university_degree_code</ColNames>
-      <RefTableName>universityDegrees</RefTableName>
-      <RefColNames>university_degree_cod</RefColNames>
-    </foreign-key>
-    <column id="75" parent="15" name="DNI">
+    <column id="42" parent="11" name="dni">
       <Position>1</Position>
       <DataType>VARCHAR(64)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="76" parent="15" name="name">
+    <column id="43" parent="11" name="name">
       <Position>2</Position>
       <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="77" parent="15" name="surnames">
+    <column id="44" parent="11" name="surnames">
       <Position>3</Position>
       <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="78" parent="15" name="tutorial">
+    <column id="45" parent="11" name="tutorial">
       <Position>4</Position>
       <DataType>VARCHAR(140)|0s</DataType>
     </column>
-    <column id="79" parent="15" name="potential_teaching">
+    <column id="46" parent="11" name="potential">
       <Position>5</Position>
       <DataType>VARCHAR(64)|0s</DataType>
     </column>
-    <column id="80" parent="15" name="preassigned_hours">
-      <Position>6</Position>
-      <DataType>INTEGER|0s</DataType>
-    </column>
-    <index id="81" parent="15" name="sqlite_autoindex_teachers_1">
+    <index id="47" parent="11" name="sqlite_autoindex_teacher_1">
       <NameSurrogate>1</NameSurrogate>
-      <ColNames>DNI</ColNames>
+      <ColNames>dni</ColNames>
       <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
-    <key id="82" parent="15">
-      <ColNames>DNI</ColNames>
+    <key id="48" parent="11">
+      <ColNames>dni</ColNames>
       <Primary>1</Primary>
-      <UnderlyingIndexName>sqlite_autoindex_teachers_1</UnderlyingIndexName>
-    </key>
-    <column id="83" parent="16" name="university_degree_cod">
-      <Position>1</Position>
-      <DataType>INTEGER|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="84" parent="16" name="acronym">
-      <Position>2</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <column id="85" parent="16" name="name">
-      <Position>3</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <column id="86" parent="16" name="study_center">
-      <Position>4</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <column id="87" parent="16" name="plan_cod">
-      <Position>5</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <column id="88" parent="16" name="special_cod">
-      <Position>6</Position>
-      <DataType>VARCHAR(64)|0s</DataType>
-    </column>
-    <index id="89" parent="16" name="ix_universityDegrees_acronym">
-      <ColNames>acronym</ColNames>
-      <ColumnCollations></ColumnCollations>
-      <Unique>1</Unique>
-    </index>
-    <index id="90" parent="16" name="ix_universityDegrees_name">
-      <ColNames>name</ColNames>
-      <ColumnCollations></ColumnCollations>
-      <Unique>1</Unique>
-    </index>
-    <key id="91" parent="16">
-      <ColNames>university_degree_cod</ColNames>
-      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_teacher_1</UnderlyingIndexName>
     </key>
   </database-model>
 </dataSource>

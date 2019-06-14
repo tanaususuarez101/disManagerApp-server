@@ -128,3 +128,47 @@ def test_export():
         <p><input type=submit value=Cargar></p>
     </form>
     '''
+
+
+@app.route('/subject', methods=['GET'])
+@app.route('/subject/<subject_cod>', methods=['GET'])
+def get_subject(subject_cod=None):
+    if not subject_cod:
+        value_return = []
+        for subject in Subjects.get_all():
+            groups = [group.to_dict() for group in subject.get_groups()]
+            subject_dict = subject.to_dict()
+            subject_dict.update({'groups': groups})
+            value_return.append(subject_dict)
+        return jsonify(value_return)
+    else:
+        sub = Subjects.get(int(subject_cod))
+        if sub:
+            groups = [group.to_dict() for group in sub.get_groups()]
+            subject_dict = sub.to_dict()
+            subject_dict.update({'groups': groups})
+            return jsonify(subject_dict)
+
+
+@app.route('/subject/group/<subject_cod>', methods=['GET'])
+def get_groups(subject_cod=None):
+    if subject_cod:
+        sub = Subjects.get(int(subject_cod))
+        if sub:
+            return jsonify([group.to_dict() for group in sub.get_groups()])
+
+
+@app.route('/university_degree/<university_cod>', methods=['GET'])
+def get_university_degree(university_cod=None):
+    university = UniversityDegrees.get(int(university_cod))
+    if university:
+        return jsonify(university.to_dict())
+
+
+@app.route('/knowledge_area/<area_cod>', methods=['GET'])
+def get_knowledge_areas(area_cod=None):
+    knowledge_area = Subjects.get(int(area_cod))
+    if knowledge_area:
+        return jsonify(knowledge_area.to_dict)
+
+

@@ -145,10 +145,10 @@ class Resource:
             if not subject:
                 subjectCount += 1
                 subject = Subjects(data['Cod Asignatura'][i],
-                                     data['Nombre Asignatura'][i],
-                                     data['Curso Asignatura'][i],
-                                     data['Cuatrimestre Asignatura'][i],
-                                     data['Tipo Asignatura'][i])
+                                    data['Nombre Asignatura'][i],
+                                    data['Cuatrimestre Asignatura'][i],
+                                    data['Curso Asignatura'][i],
+                                    data['Tipo Asignatura'][i])
                 university_degree.add_subject(subject)
                 subject.knowledge_areas.append(area)
                 university_degree.save()
@@ -161,7 +161,7 @@ class Resource:
                 subject.knowledge_areas.append(area)
                 subject.save()
 
-            assigned = Assigned.get(subject, group)
+            assigned = Assigned.get_relationship(group.group_cod, subject.subject_cod)
             if not assigned:
                 assignCount += 1
                 assigned = Assigned(data['Horas'][i])
