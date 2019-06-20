@@ -15,7 +15,7 @@ def allowed_file(filename):
 
 
 @app.route('/', methods=['GET'])
-def index():
+def menu():
     return \
         '''
         <p>Rutas disponibles</p>
@@ -52,7 +52,8 @@ def upload_database():
                 return jsonify(data_saved), 200
             else:
                 return Response('File not found', status=404)
-        except Exception:
+        except Exception as error:
+            print(error)
             return Response('Internal Server Error', status=500)
 
     return '''
@@ -172,3 +173,63 @@ def get_knowledge_areas(area_cod=None):
         return jsonify(knowledge_area.to_dict)
 
 
+@app.route('/pda/', methods=['GET'])
+@app.route('/pda', methods=['GET'])
+def get_pda():
+    listPDA = []
+    PDAs = PDA.getAll()
+    for pda in PDAs:
+        sub = Subject.get(pda.subject_cod)
+        if sub:
+            university_degree = UniversityDegree.get(sub.university_degree_cod)
+            listCoor = sub.teacher
+            for coor in listCoor:
+                if coor.subject_coor:
+                    coor_subject = Teacher.get(coor.teacher_dni)
+                    area = KnowledgeArea.get(coor_subject.area_cod)
+
+            listPDA.append({
+                'id': pda.id,
+                'status': pda.status,
+                'observations': pda.observations,
+                'university_degree_name': university_degree.name,
+                'university_degree_cod': university_degree.university_degree_cod,
+                'subject_name': sub.name,
+                'subject_cod': sub.subject_cod,
+                'knowledge_area_name': area.name,
+                'knowledge_area_cod': area.area_cod,
+                'teacher_name': coor_subject.name,
+                'teacher_surnames': coor_subject.surnames,
+                'teacher_dni': coor_subject.dni
+            })
+
+    return jsonify(listPDA)
+
+
+@app.route('/coordinator/', methods=['GET'])
+@app.route('/coordinator', methods=['GET'])
+def get_coordinator():
+    coorSubject = []
+    coorPractice = []
+    coor = Coordinator.get_all()
+    for coordinate in coor:
+        sub = Subject.get(coordinate.subject_cod)
+        tea = Teacher.get(coordinate.teacher_dni)
+        area = KnowledgeArea.get(tea.area_cod)
+        university_degree = UniversityDegree.get(sub.university_degree_cod)
+
+        item = {
+            'university_degree_name': university_degree.name,
+            'knowledge_area_name': area.name,
+            'subject_name': sub.name,
+            'subject_type': sub.type,
+            'subject_semester': sub.semester,
+            'teacher_name': tea.name,
+            'teacher_surnames': tea.surnames
+        }
+        if coordinate.practice_coor:
+            coorPractice.append(item)
+        if coordinate.subject_coor:
+            coorSubject.append(item)
+
+    return jsonify({'subject': coorSubject, 'practice': coorPractice})

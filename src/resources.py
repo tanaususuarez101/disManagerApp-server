@@ -54,7 +54,7 @@ class Resource:
         download_file = os.path.join(UPLOADS_DIR, 'backup.xlsx')# TODO- add date to exit file
         sheet = wb.active
 
-        university_degrees = UniversityDegrees.get_all()
+        university_degrees = UniversityDegree.get_all()
         sheet.append(ALLOWED_COLUMNS)
 
         for us in university_degrees:
@@ -109,68 +109,59 @@ class Resource:
         return download_file
 
     @staticmethod
-    def import_database(data=None):
+    def import_database(data=None, academic_year='2019/2020'):
 
         if not data or not allowed_field(data):
             return {}
 
-        subjectCount = universityDegreeCodeCount = groupCount = areaCount = assignCount = cont = 0
+        subjectCount = universityDegreeCodeCount = groupCount = areaCount = 0
 
         for i in range(0, len(data['Curso_Academico'])):
-            university_degree = UniversityDegrees.get(data['Cod Titulacion'][i])
-            if not university_degree:
-                universityDegreeCodeCount += 1
-                university_degree = UniversityDegrees(
-                                        data['Cod Titulacion'][i],
-                                        data['Cod Plan'][i],
-                                        data['Cod Especialidad'][i],
-                                        data['Acronimo Titulacion'][i],
-                                        data['Nombre Titulacion'][i],
-                                        data['Centro Imparticion'][i])
-                university_degree.save()
+            if data['Curso_Academico'][i]:
+                university_degree = UniversityDegree.get(data['Cod Titulacion'][i])
+                if not university_degree:
+                    universityDegreeCodeCount += 1
+                    university_degree = UniversityDegree(
+                                            data['Cod Titulacion'][i],
+                                            data['Nombre Titulacion'][i],
+                                            data['Cod Plan'][i],
+                                            data['Cod Especialidad'][i],
+                                            data['Acronimo Titulacion'][i],
+                                            data['Centro Imparticion'][i])
+                    university_degree.save()
 
-            group = Groups.get(data['Cod Grupo'][i])
-            if not group:
-                groupCount += 1
-                group = Groups(data['Cod Grupo'][i], data['Tipo Grupo'][i])
-                group.save()
+                area = KnowledgeArea.get(data['Cod Area'][i])
+                if not area:
+                    areaCount += 1
+                    area = KnowledgeArea(data['Cod Area'][i], data['Nombre Area'][i])
+                    area.save()
 
-            area = KnowledgeAreas.get(data['Cod Area'][i])
-            if not area:
-                areaCount += 1
-                area = KnowledgeAreas(data['Cod Area'][i], data['Nombre Area'][i])
-                area.save()
+                subject = Subject.get(data['Cod Asignatura'][i])
+                if not subject:
+                    subjectCount += 1
+                    subject = Subject(data['Cod Asignatura'][i],
+                                        data['Nombre Asignatura'][i],
+                                        data['Tipo Asignatura'][i],
+                                        data['Cuatrimestre Asignatura'][i],
+                                        data['Curso Asignatura'][i],
+                                        data['Curso_Academico'][i],
+                                        data['Cod Titulacion'][i])
+                    subject.save()
 
-            subject = Subjects.get(data['Cod Asignatura'][i])
-            if not subject:
-                subjectCount += 1
-                subject = Subjects(data['Cod Asignatura'][i],
-                                    data['Nombre Asignatura'][i],
-                                    data['Cuatrimestre Asignatura'][i],
-                                    data['Curso Asignatura'][i],
-                                    data['Tipo Asignatura'][i])
-                university_degree.add_subject(subject)
-                subject.knowledge_areas.append(area)
-                university_degree.save()
-                subject.save()
-                '''
-                añadir condicion para otro area de conocimiento, el actual solo permite añadir uno.
-                '''
+                if subject not in area.subject:
+                    area.subject.append(subject)
+                    area.save()
 
-            if not area in subject.knowledge_areas:
-                subject.knowledge_areas.append(area)
-                subject.save()
-
-            assigned = Assigned.get_relationship(group.group_cod, subject.subject_cod)
-            if not assigned:
-                assignCount += 1
-                assigned = Assigned(data['Horas'][i])
-                assigned.groups = group
-                assigned.subjects = subject
-                assigned.save()
+                group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i])
+                if not group:
+                    groupCount += 1
+                    group = Group(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Tipo Grupo'][i], data['Horas'][i])
+                    group.save()
+                else:
+                    print('Grupo no añadido {}'.format(group))
 
         return {'subjects': subjectCount, 'universityDegrees': universityDegreeCodeCount, 'groups': groupCount,
-                'areas': areaCount, 'assign': assignCount}
+                'areas': areaCount}
 
     @staticmethod
     def file_statistics(data=None):
