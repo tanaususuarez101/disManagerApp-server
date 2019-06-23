@@ -131,47 +131,65 @@ def test_export():
     '''
 
 
-@app.route('/subject', methods=['GET'])
-@app.route('/subject/<subject_cod>', methods=['GET'])
-def get_subject(subject_cod=None):
-    if not subject_cod:
-        value_return = []
-        for subject in Subjects.get_all():
-            groups = [group.to_dict() for group in subject.get_groups()]
-            subject_dict = subject.to_dict()
-            subject_dict.update({'groups': groups})
-            value_return.append(subject_dict)
-        return jsonify(value_return)
+@app.route('/group', methods=['GET'])
+@app.route('/group/<group_cod>/<subject_cod>/<area_cod>', methods=['GET'])
+def get_group(group_cod=None, subject_cod=None, area_cod=None,):
+    if not subject_cod and not area_cod and not group_cod:
+        subject_list = []
+
+        for university in UniversityDegree.get_all():
+            for subject in university.subject:
+                for group in subject.group:
+                    area = KnowledgeArea.get(group.area_cod)
+
+                    cover_hour = 0
+                    for impart in group.teacher:
+                        cover_hour += float(impart.hours)
+
+                    cover_hour -= float(group.hours)
+                    subject_list.append({
+                        "university_degree_name": university.name,
+                        "university_degree_cod": university.university_degree_cod,
+                        "university_degree_acronym": university.acronym,
+                        "subject_cod": subject.subject_cod,
+                        "subject_name": subject.name,
+                        "subject_course": subject.course,
+                        "subject_semester": subject.semester,
+                        "group_cod": group.group_cod,
+                        "group_area_name": area.name,
+                        "group_area_cod": area.area_cod,
+                        "group_type": group.type,
+                        "group_hours": group.hours,
+                        "cover_hours": cover_hour
+                    })
+        return jsonify(subject_list)
     else:
-        sub = Subjects.get(int(subject_cod))
-        if sub:
-            groups = [group.to_dict() for group in sub.get_groups()]
-            subject_dict = sub.to_dict()
-            subject_dict.update({'groups': groups})
-            return jsonify(subject_dict)
-
-
-@app.route('/subject/group/<subject_cod>', methods=['GET'])
-def get_groups(subject_cod=None):
-    if subject_cod:
-        sub = Subjects.get(int(subject_cod))
-        if sub:
-            return jsonify([group.to_dict() for group in sub.get_groups()])
-
-
-@app.route('/university_degree/<university_cod>', methods=['GET'])
-def get_university_degree(university_cod=None):
-    university = UniversityDegrees.get(int(university_cod))
-    if university:
-        return jsonify(university.to_dict())
-
-
-@app.route('/knowledge_area/<area_cod>', methods=['GET'])
-def get_knowledge_areas(area_cod=None):
-    knowledge_area = Subjects.get(int(area_cod))
-    if knowledge_area:
-        return jsonify(knowledge_area.to_dict)
-
+        group = Group.get(group_cod, subject_cod, area_cod)
+        #group = Group.get('17', '40304', '35')
+        print(group)
+        if group:
+            subject = Subject.get(subject_cod)
+            university = subject.university_degree
+            area = KnowledgeArea.get(area_cod)
+            teacher = []
+            for impart in group.teacher:
+                te = impart.teacher
+                print(te.name)
+                teacher.append({
+                    'teacher_name': te.name,
+                    'teacher_surname': te.surnames,
+                    'teacher_assigned': impart.hours
+                })
+            return jsonify({
+                "university_degree_name": university.name,
+                "knowledge_area_name": area.name,
+                "subject_name": subject.name,
+                "group_cod": group.area_cod,
+                "group_type": group.type,
+                "group_hours": group.hours,
+                "teacher": teacher
+            })
+    return jsonify({})
 
 @app.route('/pda/', methods=['GET'])
 @app.route('/pda', methods=['GET'])
@@ -209,10 +227,9 @@ def get_pda():
 @app.route('/coordinator/', methods=['GET'])
 @app.route('/coordinator', methods=['GET'])
 def get_coordinator():
-    coorSubject = []
-    coorPractice = []
-    coor = Coordinator.get_all()
-    for coordinate in coor:
+    coor_subject = []
+    coor_practice = []
+    for coordinate in Coordinator.get_all():
         sub = Subject.get(coordinate.subject_cod)
         tea = Teacher.get(coordinate.teacher_dni)
         area = KnowledgeArea.get(tea.area_cod)
@@ -228,8 +245,8 @@ def get_coordinator():
             'teacher_surnames': tea.surnames
         }
         if coordinate.practice_coor:
-            coorPractice.append(item)
+            coor_practice.append(item)
         if coordinate.subject_coor:
-            coorSubject.append(item)
+            coor_subject.append(item)
 
-    return jsonify({'subject': coorSubject, 'practice': coorPractice})
+    return jsonify({'subject': coor_subject, 'practice': coor_practice})

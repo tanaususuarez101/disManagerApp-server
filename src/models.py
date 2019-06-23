@@ -1,11 +1,5 @@
 from src import db
 from sqlalchemy.exc import IntegrityError
-import sys
-
-Belong_to = db.Table('Belong_to', db.metadata,
-                 db.Column('subject_cod', db.String(64), db.ForeignKey('subject.subject_cod')),
-                 db.Column('area_cod', db.String(64), db.ForeignKey('knowledgeArea.area_cod')))
-
 
 Venia = db.Table('Venia', db.metadata,
                  db.Column('area_cod', db.String(64), db.ForeignKey('knowledgeArea.area_cod')),
@@ -58,6 +52,7 @@ class Coordinator(db.Model):
     def get_all():
         return Coordinator.query.all()
 
+
 class Subject(db.Model):
     __tablename__ = "subject"
 
@@ -72,9 +67,7 @@ class Subject(db.Model):
 
     group = db.relationship('Group', back_populates="subject", cascade="all,delete")
     university_degree = db.relationship('UniversityDegree', back_populates="subject")
-    knowledge_area = db.relationship('KnowledgeArea', secondary=Belong_to, back_populates="subject")
     PDA = db.relationship('PDA', back_populates="subject", cascade="all, delete-orphan")
-
     teacher = db.relationship('Coordinator', back_populates='subject')
 
     def __init__(self, subject_cod=None, name=None, type=None, semester=None, course=None, academic_year=None,
@@ -114,16 +107,24 @@ class Subject(db.Model):
         if subject_cod:
             return Subject.query.get(subject_cod)
 
+    @staticmethod
+    def get_all():
+        return Subject.query.all()
+
 
 class Impart(db.Model):
     __tablename__ = "impart"
 
     group_cod = db.Column(db.String(64), primary_key=True)
     subject_cod = db.Column(db.String(64), primary_key=True)
+    area_cod = db.Column(db.String(64), primary_key=True)
     teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
+
     hours = db.Column(db.String(64))
 
-    __table_args__ = (db.ForeignKeyConstraint([group_cod, subject_cod], ['group.group_cod', 'group.subject_cod']), {})
+    __table_args__ = (db.ForeignKeyConstraint([group_cod, subject_cod, area_cod], ['group.group_cod',
+                                                                                   'group.subject_cod',
+                                                                                   'group.area_cod']), {})
 
     teacher = db.relationship('Teacher', back_populates='group')
     group = db.relationship('Group', back_populates='teacher')
@@ -133,6 +134,10 @@ class Impart(db.Model):
             self.teacher = teacher
             self.group = group
             self.hours = hours
+
+    def __repr__(self):
+        return '<group: (group_cod: {}, subject_cod: {}, area_cod: {}) Teacher: {}>'.format(self.group_cod, self.subject_cod,
+                                                                                self.area_cod, self.teacher_dni)
 
     def save(self):
         try:
@@ -158,18 +163,20 @@ class Group(db.Model):
 
     group_cod = db.Column(db.String(64), primary_key=True)
     subject_cod = db.Column(db.String(64), db.ForeignKey('subject.subject_cod'), primary_key=True)
+    area_cod = db.Column(db.String(64), db.ForeignKey('knowledgeArea.area_cod'), primary_key=True)
 
-    type = db.Column(db.String(64), nullable=False)
+    type = db.Column(db.String(64))
     hours = db.Column(db.String(64))
 
     subject = db.relationship('Subject', back_populates='group')
+    knowledgeArea = db.relationship('KnowledgeArea', back_populates='group')
     teacher = db.relationship('Impart', back_populates='group')
 
-    def __init__(self, group_code=None, subject_cod=None, type=None, hours=None):
-        print('Creando grupo: {}, {}, {}, {}'.format(group_code, subject_cod, type, hours))
-        if group_code and subject_cod and type and hours:
+    def __init__(self, group_code=None, subject_cod=None, area_cod=None, type=None, hours=None):
+        if group_code and subject_cod and area_cod:
             self.group_cod = group_code
             self.subject_cod = subject_cod
+            self.area_cod = area_cod
             self.type = type
             self.hours = hours
 
@@ -192,9 +199,9 @@ class Group(db.Model):
             return False
 
     @staticmethod
-    def get(group_cod=None, subject_cod=None):
+    def get(group_cod=None, subject_cod=None, area_cod=None):
         if group_cod and subject_cod:
-            return Group.query.get([group_cod, subject_cod])
+            return Group.query.get([group_cod, subject_cod, area_cod])
 
     def to_dict(self):
         return {
@@ -319,8 +326,8 @@ class KnowledgeArea(db.Model):
     area_cod = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
 
-    subject = db.relationship('Subject', secondary=Belong_to, back_populates="knowledge_area", cascade="all,delete")
     teacher = db.relationship('Teacher', backref='knowledgeArea', cascade="all,delete")
+    group = db.relationship('Group', back_populates='knowledgeArea')
 
     def __init__(self, area_cod=None, name=None):
         self.area_cod = area_cod
@@ -398,4 +405,3 @@ class PDA(db.Model):
             'subject_name': self.subject.name,
             'status': self.status,
             'observations': self.observations}
-

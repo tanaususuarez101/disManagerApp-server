@@ -1,5 +1,5 @@
 from src import app, db
-from src.models import Subject, Group, Teacher, Impart, UniversityDegree, PDA, KnowledgeArea, Coordinator
+from src.models import Subject, Group, Teacher, UniversityDegree, PDA, KnowledgeArea, Coordinator, Impart
 #KnowledgeAreas,  PDA, , Have,
 
 @app.shell_context_processor

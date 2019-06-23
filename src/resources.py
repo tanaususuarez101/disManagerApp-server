@@ -109,64 +109,61 @@ class Resource:
         return download_file
 
     @staticmethod
-    def import_database(data=None, academic_year='2019/2020'):
+    def import_database(data=None):
 
-        if not data or not allowed_field(data):
-            return {}
+        if data or allowed_field(data):
+            subject_count = university_degree_code_count = group_count = area_count = 0
 
-        subjectCount = universityDegreeCodeCount = groupCount = areaCount = 0
+            for i in range(0, len(data['Curso_Academico'])):
+                if data['Curso_Academico'][i]:
+                    university_degree = UniversityDegree.get(data['Cod Titulacion'][i])
+                    if not university_degree:
+                        university_degree = UniversityDegree(
+                                                data['Cod Titulacion'][i],
+                                                data['Nombre Titulacion'][i],
+                                                data['Cod Plan'][i],
+                                                data['Cod Especialidad'][i],
+                                                data['Acronimo Titulacion'][i],
+                                                data['Centro Imparticion'][i])
+                        if university_degree.save():
+                            university_degree_code_count += 1
 
-        for i in range(0, len(data['Curso_Academico'])):
-            if data['Curso_Academico'][i]:
-                university_degree = UniversityDegree.get(data['Cod Titulacion'][i])
-                if not university_degree:
-                    universityDegreeCodeCount += 1
-                    university_degree = UniversityDegree(
-                                            data['Cod Titulacion'][i],
-                                            data['Nombre Titulacion'][i],
-                                            data['Cod Plan'][i],
-                                            data['Cod Especialidad'][i],
-                                            data['Acronimo Titulacion'][i],
-                                            data['Centro Imparticion'][i])
-                    university_degree.save()
+                    subject = Subject.get(data['Cod Asignatura'][i])
+                    if not subject:
+                        subject = Subject(data['Cod Asignatura'][i],
+                                          data['Nombre Asignatura'][i],
+                                          data['Tipo Asignatura'][i],
+                                          data['Cuatrimestre Asignatura'][i],
+                                          data['Curso Asignatura'][i],
+                                          data['Curso_Academico'][i],
+                                          data['Cod Titulacion'][i])
+                        if subject.save():
+                            subject_count += 1
 
-                area = KnowledgeArea.get(data['Cod Area'][i])
-                if not area:
-                    areaCount += 1
-                    area = KnowledgeArea(data['Cod Area'][i], data['Nombre Area'][i])
-                    area.save()
+                    area = KnowledgeArea.get(data['Cod Area'][i])
+                    if not area:
 
-                subject = Subject.get(data['Cod Asignatura'][i])
-                if not subject:
-                    subjectCount += 1
-                    subject = Subject(data['Cod Asignatura'][i],
-                                        data['Nombre Asignatura'][i],
-                                        data['Tipo Asignatura'][i],
-                                        data['Cuatrimestre Asignatura'][i],
-                                        data['Curso Asignatura'][i],
-                                        data['Curso_Academico'][i],
-                                        data['Cod Titulacion'][i])
-                    subject.save()
+                        area = KnowledgeArea(data['Cod Area'][i], data['Nombre Area'][i])
+                        area.save()
+                        if area.save():
+                            area_count += 1
 
-                if subject not in area.subject:
-                    area.subject.append(subject)
-                    area.save()
+                    group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Cod Area'][i])
+                    if not group:
+                        group = Group(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Cod Area'][i],
+                                      data['Tipo Grupo'][i], data['Horas'][i])
+                        if group.save():
+                            group_count += 1
 
-                group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i])
-                if not group:
-                    groupCount += 1
-                    group = Group(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Tipo Grupo'][i], data['Horas'][i])
-                    group.save()
-                else:
-                    print('Grupo no añadido {}'.format(group))
-
-        return {'subjects': subjectCount, 'universityDegrees': universityDegreeCodeCount, 'groups': groupCount,
-                'areas': areaCount}
+        return {
+            'subjects': subject_count,
+            'universityDegrees': university_degree_code_count,
+            'groups': group_count,
+            'areas': area_count
+        }
 
     @staticmethod
     def file_statistics(data=None):
         if data:
             value = {key: len(set(data[key])) if None not in data[key] else 0 for key in data.keys()}
             return value
-        else:
-            return {}
