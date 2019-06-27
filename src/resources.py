@@ -84,28 +84,18 @@ class Resource:
         download_file = os.path.join(UPLOADS_DIR, 'database.xlsx')# TODO- add date to exit file
         sheet = wb.active
 
-        university_degrees = UniversityDegrees.get_all()
+        groups = Group.get_all()
         sheet.append(['Curso Acad.', 'Codigo Titulacion', 'Codigo Plan', 'Codigo Espec.', 'Codigo Asignatura.',
                       'Codigo Grupo', 'DNI (sin letra)', 'Num Horas', 'Codigo area.', 'Venia'])
 
-        for us in university_degrees:
-            us_row = ['201920', us.university_degree_cod, us.plan_cod, us.special_cod]
-            subjects = us.subjects
-            for sub in subjects:
-                sub_row = [sub.subject_cod]
-                all_assign = Assigned.get_subject_relationship(sub)
-                areas = sub.knowledge_areas
-                for assigned in all_assign:
-                    group = Groups.get(assigned.group_cod)
-                    group_row = [group.group_cod, '', assigned.number_hours]
-                    for area in areas:
-                        area_row = [area.area_cod, 'N']
-                        sheet.append(us_row + sub_row + group_row + area_row)
-                        area_row.clear()
-                    group_row.clear()
-                sub_row.clear()
-            us_row.clear()
-        wb.save(download_file)
+        for group in groups:
+            subject = Subject.get(group.subject_cod)
+            area = KnowledgeArea.get(group.area_cod)
+            titulation = UniversityDegree.get(subject.university_degree_cod)
+            sheet.append(['201920', titulation.university_degre_cod, titulation.plan_cod, titulation.special_cod,
+                         subject.subject_cod, group.group_cod, '', group.group_hours, area.area_cod, 'N'])
+            wb.save(download_file)
+
         return download_file
 
     @staticmethod
@@ -161,6 +151,30 @@ class Resource:
             'groups': group_count,
             'areas': area_count
         }
+
+    @staticmethod
+    def import_teacher(data=None):
+        if data:
+            for i in range(0, len(data['dni'])):
+                teacher = Teacher.get(data['dni'][i])
+                if not teacher:
+                    teacher = Teacher(
+                        data['dni'][i],
+                        data['nombre'][i],
+                        data['apellidos'][i],
+                        '',
+                        data['potencial'][i],
+                        data['Cod Area'][i])
+                    if teacher.save():
+                        print('Ha sido guardado {}'.format(teacher))
+
+    @staticmethod
+    def import_pda(data=None):
+        if data:
+            for i in range(0, len(data['Cod Asignatura'])):
+                pda = PDA(data['Cod Asignatura'][i], data['Estado'][i], data['Observaciones'][i])
+                if pda.save():
+                    print('Ha sido guardado {}'.format(pda))
 
     @staticmethod
     def file_statistics(data=None):

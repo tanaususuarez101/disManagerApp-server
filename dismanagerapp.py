@@ -1,5 +1,7 @@
 from src import app, db
-from src.models import Subject, Group, Teacher, UniversityDegree, PDA, KnowledgeArea, Coordinator, Impart
+from src.models import Subject, Group, Teacher, UniversityDegree, PDA, KnowledgeArea, Coordinator, Impart, Tutorial
+
+
 #KnowledgeAreas,  PDA, , Have,
 
 @app.shell_context_processor
@@ -12,7 +14,8 @@ def make_shell_context():
             'UniversityDegree': UniversityDegree,
             'PDA': PDA,
             'AreaKnowledge': KnowledgeArea,
-            'Coordinator': Coordinator
+            'Coordinator': Coordinator,
+            'Tutorial': Tutorial
             }
 
 

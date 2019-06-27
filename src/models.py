@@ -203,6 +203,10 @@ class Group(db.Model):
         if group_cod and subject_cod:
             return Group.query.get([group_cod, subject_cod, area_cod])
 
+    @staticmethod
+    def get_all():
+        return Group.query.all()
+
     def to_dict(self):
         return {
             'group_cod': self.group_cod,
@@ -218,11 +222,12 @@ class Teacher(db.Model):
     area_cod = db.Column(db.String(64), db.ForeignKey('knowledgeArea.area_cod'), nullable=True)
     name = db.Column(db.String(64), nullable=True)
     surnames = db.Column(db.String(64), nullable=True)
-    tutorial = db.Column(db.String(140))
     potential = db.Column(db.String(64), nullable=True)
+    tutorial_hours = db.Column(db.String(64), nullable=True)
 
     group = db.relationship('Impart', back_populates='teacher')
     subject = db.relationship('Coordinator', back_populates='teacher')
+    tutorial = db.relationship('Tutorial', uselist=False, back_populates='teacher')
 
     def __init__(self, dni=None, name=None, surname=None, tutorial=None, potential=None, cod_area=None):
         self.dni = dni
@@ -257,6 +262,10 @@ class Teacher(db.Model):
     def get(dni):
         if dni:
             return Teacher.query.get(dni)
+
+    @staticmethod
+    def get_all():
+        return Teacher.query.all()
 
 
 class UniversityDegree(db.Model):
@@ -369,7 +378,7 @@ class PDA(db.Model):
 
     def __init__(self, subject_cod=None, status=None, observations=None):
         self.subject_cod = subject_cod
-        self.status = status.lower()
+        self.status = status
         self.observations = observations
 
     def __repr__(self):
@@ -405,3 +414,46 @@ class PDA(db.Model):
             'subject_name': self.subject.name,
             'status': self.status,
             'observations': self.observations}
+
+
+class Tutorial(db.Model):
+    __tablename__ = "tutorial"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    teacher_dni = db.Column(db.Integer, db.ForeignKey('teacher.dni'), unique=True)
+    first_semester = db.Column(db.String(128))
+    second_semester = db.Column(db.String(128))
+    hours = db.Column(db.String(64))
+
+    teacher = db.relationship('Teacher', back_populates='tutorial')
+
+    def __init__(self, teacher=None):
+        self.teacher = teacher
+
+    def __repr__(self):
+        return '<Tutorial id: {}, first_semester {}, second_semester: {}, hours: {} >'.format(self.id,
+                                                                                              self.first_semester,
+                                                                                              self.second_semester,
+                                                                                              self.hours)
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def get_all():
+        return Tutorial.query.all()

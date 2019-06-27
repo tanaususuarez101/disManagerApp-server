@@ -18,12 +18,14 @@ def allowed_file(filename):
 def menu():
     return \
         '''
-        <p>Rutas disponibles</p>
+        <p>Menú</p>
         <ul>
-            <li><a href="upload_database">Cargar base de datos</a></li>
+            <li><a href="upload_database">Importar Titulaciones, Asignaturas, Areas de conocimiento, Grupos</a></li>
+            <li><a href="upload_pda">Importar PDA</a></li>
+            <li><a href="upload_teacher">Importar Teacher</a></li>
             <li><a href="download_database">Descargar base de datos</a></li>
             <li><a href="export_database">Exportar datos</a></li>
-            <li><a href="test_export">Test de exportacion de datos</a></li>
+            <li><a href="test_export">Test de exportacion de datos</a></li>            
         </ul>
         '''
 
@@ -59,6 +61,80 @@ def upload_database():
     return '''
     <!doctype html>
     <title>Subir un nuevo fichero</title>
+    <h1>Cargar contenido principal del PDO en la base de datos</h1>
+    <form method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Cargar>
+    </form>
+    '''
+
+
+@app.route('/upload_teacher', methods=['GET', 'POST'])
+def upload_teacher():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        try:
+            if 'file' not in request.files:
+                return ''
+
+            request_file = request.files['file']
+            if request_file and allowed_file(request_file.filename):
+                filename = secure_filename(request_file.filename)
+                filename_dir = os.path.join(UPLOADS_DIR, filename)
+                request_file.save(filename_dir)
+
+                data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+                Resource.import_teacher(data_file)
+                print(data_file)
+                os.remove(filename_dir)
+
+                return jsonify(), 200
+            else:
+                return Response('File not found', status=404)
+        except Exception as error:
+            print(error)
+            return Response('Internal Server Error', status=500)
+
+    return '''
+    <!doctype html>
+    <title>Subir fichero</title>
+    <h1>Subir un nuevo fichero con profesores</h1>
+    <form method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Cargar>
+    </form>
+    '''
+
+
+@app.route('/upload_pda', methods=['GET', 'POST'])
+def upload_pda():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        try:
+            if 'file' not in request.files:
+                return ''
+
+            request_file = request.files['file']
+            if request_file and allowed_file(request_file.filename):
+                filename = secure_filename(request_file.filename)
+                filename_dir = os.path.join(UPLOADS_DIR, filename)
+                request_file.save(filename_dir)
+
+                data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+                Resource.import_pda(data_file)
+                print(data_file)
+                os.remove(filename_dir)
+
+                return jsonify(), 200
+            else:
+                return Response('File not found', status=404)
+        except Exception as error:
+            print(error)
+            return Response('Internal Server Error', status=500)
+
+    return '''
+    <!doctype html>
+    <title>Subir un nuevo fichero con Proyecto docente</title>
     <h1>Subir un nuevo fichero</h1>
     <form method=post enctype=multipart/form-data>
       <p><input type=file name=file>
@@ -141,7 +217,6 @@ def get_group(group_cod=None, subject_cod=None, area_cod=None,):
             for subject in university.subject:
                 for group in subject.group:
                     area = KnowledgeArea.get(group.area_cod)
-
                     cover_hour = 0
                     for impart in group.teacher:
                         cover_hour += float(impart.hours)
@@ -165,8 +240,6 @@ def get_group(group_cod=None, subject_cod=None, area_cod=None,):
         return jsonify(subject_list)
     else:
         group = Group.get(group_cod, subject_cod, area_cod)
-        #group = Group.get('17', '40304', '35')
-        print(group)
         if group:
             subject = Subject.get(subject_cod)
             university = subject.university_degree
@@ -184,44 +257,46 @@ def get_group(group_cod=None, subject_cod=None, area_cod=None,):
                 "university_degree_name": university.name,
                 "knowledge_area_name": area.name,
                 "subject_name": subject.name,
-                "group_cod": group.area_cod,
+                "group_cod": group.group_cod,
                 "group_type": group.type,
                 "group_hours": group.hours,
                 "teacher": teacher
             })
     return jsonify({})
 
+
 @app.route('/pda/', methods=['GET'])
 @app.route('/pda', methods=['GET'])
 def get_pda():
-    listPDA = []
+    list_pda = []
     PDAs = PDA.getAll()
     for pda in PDAs:
         sub = Subject.get(pda.subject_cod)
         if sub:
             university_degree = UniversityDegree.get(sub.university_degree_cod)
-            listCoor = sub.teacher
-            for coor in listCoor:
+            for coor in sub.teacher:
                 if coor.subject_coor:
                     coor_subject = Teacher.get(coor.teacher_dni)
                     area = KnowledgeArea.get(coor_subject.area_cod)
 
-            listPDA.append({
+
+
+            list_pda.append({
                 'id': pda.id,
                 'status': pda.status,
                 'observations': pda.observations,
                 'university_degree_name': university_degree.name,
                 'university_degree_cod': university_degree.university_degree_cod,
                 'subject_name': sub.name,
-                'subject_cod': sub.subject_cod,
-                'knowledge_area_name': area.name,
-                'knowledge_area_cod': area.area_cod,
-                'teacher_name': coor_subject.name,
-                'teacher_surnames': coor_subject.surnames,
-                'teacher_dni': coor_subject.dni
+                'subject_cod': sub.subject_cod
+                #'knowledge_area_name': area.name,
+                #'knowledge_area_cod': area.area_cod,
+                #'teacher_name': coor_subject.name,
+                #'teacher_surnames': coor_subject.surnames,
+                #'teacher_dni': coor_subject.dni
             })
 
-    return jsonify(listPDA)
+    return jsonify(list_pda)
 
 
 @app.route('/coordinator/', methods=['GET'])
@@ -250,3 +325,49 @@ def get_coordinator():
             coor_subject.append(item)
 
     return jsonify({'subject': coor_subject, 'practice': coor_practice})
+
+
+@app.route('/tutorial/', methods=['GET'])
+@app.route('/tutorial', methods=['GET'])
+def get_tutorial():
+
+    list_tutorial = []
+    for teacher in Teacher.get_all():
+        area = KnowledgeArea.get(teacher.area_cod)
+        tutorial = teacher.tutorial
+        if tutorial:
+            list_tutorial.append({
+                'teacher_name': teacher.name,
+                'teacher_surnames': teacher.surnames,
+                'teacher_dni': teacher.dni,
+                'knowledge_area_name': area.name,
+                'tutorial_hours': teacher.tutorial_hours,
+                'cover_hours': tutorial.hours,
+                'unassigned_hours': float(tutorial.hours) - float(teacher.tutorial_hours)
+            })
+    return jsonify(list_tutorial)
+
+
+@app.route('/teacher_load/', methods=['GET'])
+@app.route('/teacher_load', methods=['GET'])
+def get_teacher_load():
+
+    list_teacher = []
+    for teacher in Teacher.get_all():
+        area = KnowledgeArea.get(teacher.area_cod)
+        if len(teacher.group) > 0:
+            cover_hours = 0.
+            for imparte in teacher.group:
+                group = Group.get(imparte.group_cod, imparte.subject_cod, imparte.area_cod)
+                cover_hours += float(group.hours)
+            list_teacher.append({
+                'teacher_name': teacher.name,
+                'teacher_surnames': teacher.surnames,
+                'teacher_dni': teacher.dni,
+                'knowledge_area_name': area.name,
+                'potential': teacher.potential,
+                'cover_hours': cover_hours,
+                'unassigned_hours': float(cover_hours) - float(teacher.potential)
+            })
+    return jsonify(list_teacher)
+
