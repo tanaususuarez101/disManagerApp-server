@@ -22,8 +22,8 @@ class Coordinator(db.Model):
         if subject and teacher:
             self.subject = subject
             self.teacher = teacher
-            self.practiceCoordinator = practice_coordinator
-            self.subjectCoordinator = subject_coordinator
+            self.practice_coor = practice_coordinator
+            self.subject_coor = subject_coordinator
 
     def save(self):
         try:
@@ -229,12 +229,13 @@ class Teacher(db.Model):
     subject = db.relationship('Coordinator', back_populates='teacher')
     tutorial = db.relationship('Tutorial', uselist=False, back_populates='teacher')
 
-    def __init__(self, dni=None, name=None, surname=None, tutorial=None, potential=None, cod_area=None):
+    def __init__(self, dni=None, name=None, surname=None, potential=None, tutorial_hours=None,
+                 cod_area=None):
         self.dni = dni
         self.name = name
         self.surnames = surname
-        self.tutorial = tutorial
         self.potential = potential
+        self.tutorial_hours = tutorial_hours
         self.area_cod = cod_area
 
     def __repr__(self):

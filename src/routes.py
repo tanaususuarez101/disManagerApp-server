@@ -106,6 +106,38 @@ def upload_teacher():
     '''
 
 
+@app.route('/upload_simulation', methods=['GET', 'POST'])
+def upload_simulation():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            return ''
+
+        request_file = request.files['file']
+        if request_file and allowed_file(request_file.filename):
+            filename = secure_filename(request_file.filename)
+            filename_dir = os.path.join(UPLOADS_DIR, filename)
+            request_file.save(filename_dir)
+
+            data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+            Resource.load_simulation(data_file)
+            os.remove(filename_dir)
+
+            return jsonify(), 200
+        else:
+            return Response('File not found', status=404)
+
+    return '''
+    <!doctype html>
+    <title>Subir fichero</title>
+    <h1>Subir un nuevo fichero con profesores</h1>
+    <form method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Cargar>
+    </form>
+    '''
+
+
 @app.route('/upload_pda', methods=['GET', 'POST'])
 def upload_pda():
     if request.method == 'POST':
@@ -348,18 +380,20 @@ def get_tutorial():
     return jsonify(list_tutorial)
 
 
-@app.route('/teacher_load/', methods=['GET'])
+@app.route('/teacher_load/<dni>', methods=['GET'])
 @app.route('/teacher_load', methods=['GET'])
-def get_teacher_load():
+def get_teacher_load(dni=None):
 
-    list_teacher = []
-    for teacher in Teacher.get_all():
-        area = KnowledgeArea.get(teacher.area_cod)
-        if len(teacher.group) > 0:
+    if not dni:
+        list_teacher = []
+        for teacher in Teacher.get_all():
+            area = KnowledgeArea.get(teacher.area_cod)
             cover_hours = 0.
-            for imparte in teacher.group:
-                group = Group.get(imparte.group_cod, imparte.subject_cod, imparte.area_cod)
+
+            for impart in teacher.group:
+                group = Group.get(impart.group_cod, impart.subject_cod, impart.area_cod)
                 cover_hours += float(group.hours)
+
             list_teacher.append({
                 'teacher_name': teacher.name,
                 'teacher_surnames': teacher.surnames,
@@ -369,5 +403,27 @@ def get_teacher_load():
                 'cover_hours': cover_hours,
                 'unassigned_hours': float(cover_hours) - float(teacher.potential)
             })
-    return jsonify(list_teacher)
+        return jsonify(list_teacher)
+    else:
+        list_group = []
+        teacher = Teacher.get(dni)
+        if teacher:
+            for impart in teacher.group:
+                group = Group.get(impart.group_cod, impart.subject_cod, impart.area_cod)
+                area = KnowledgeArea.get(impart.area_cod)
+                subject = Subject.get(impart.subject_cod)
+                list_group.append({
+                    'teacher_name': teacher.name,
+                    'teacher_surnames': teacher.surnames,
+                    'university_degree_name': area.name,
+                    'subject_name': subject.name,
+                    'subject_course': subject.course,
+                    'subject_type': subject.type,
+                    'subject_semester': subject.semester,
+                    'group_type': group.type,
+                    'group_cod': group.group_cod,
+                    'assigned_hours': impart.hours
+                })
+        return jsonify({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames, 'groups': list_group})
+
 

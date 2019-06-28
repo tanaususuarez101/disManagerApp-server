@@ -162,8 +162,8 @@ class Resource:
                         data['dni'][i],
                         data['nombre'][i],
                         data['apellidos'][i],
-                        '',
                         data['potencial'][i],
+                        data['horas tutorias'][i],
                         data['Cod Area'][i])
                     if teacher.save():
                         print('Ha sido guardado {}'.format(teacher))
@@ -181,3 +181,24 @@ class Resource:
         if data:
             value = {key: len(set(data[key])) if None not in data[key] else 0 for key in data.keys()}
             return value
+
+    @staticmethod
+    def load_simulation(data=None):
+        if data:
+            for i in range(0, len(data['Cod Asignatura'])):
+                subject = Subject.get(data['Cod Asignatura'][i])
+                group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Cod Area'][i])
+                teacher = Teacher.get(data['dni'][i])
+                impart = Impart(group, teacher, data['Horas'][i])
+                impart.save()
+
+                if data['Coord_practica'][i] == 'S' and data['Coord_asignatura'][i] == 'S':
+                    coordinator = Coordinator(subject, teacher, True, True)
+                    coordinator.save()
+                elif data['Coord_practica'][i] == 'S':
+                    coordinator = Coordinator(subject, teacher, True)
+                    coordinator.save()
+                elif data['Coord_asignatura'][i] == 'S':
+                    coordinator = Coordinator(subject, teacher, True)
+                    coordinator.save()
+
