@@ -1,5 +1,6 @@
-from src import db
+from src import db, app
 from sqlalchemy.exc import IntegrityError
+
 
 Venia = db.Table('Venia', db.metadata,
                  db.Column('area_cod', db.String(64), db.ForeignKey('knowledgeArea.area_cod')),
@@ -84,6 +85,11 @@ class Subject(db.Model):
         return '<Asignatura: cod: {}, Nombre: {}, Titulación: {}>'.format(self.subject_cod, self.name,
                                                                           self.university_degree_cod)
 
+    def to_dict(self):
+        return {'subject_cod': self.subject_cod, 'university_degree_cod': self.university_degree_cod, 'subject_academic_year':
+                self.academic_year, 'subject_name': self.name, 'subject_course': self.course,
+                'subject_semester': self.semester, 'subject_type': self.type}
+
     def save(self):
         try:
             db.session.add(self)
@@ -121,6 +127,7 @@ class Impart(db.Model):
     teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
 
     hours = db.Column(db.String(64))
+    state_solicitation = db.Column(db.String(64))
 
     __table_args__ = (db.ForeignKeyConstraint([group_cod, subject_cod, area_cod], ['group.group_cod',
                                                                                    'group.subject_cod',
@@ -129,12 +136,12 @@ class Impart(db.Model):
     teacher = db.relationship('Teacher', back_populates='group')
     group = db.relationship('Group', back_populates='teacher')
 
-    def __init__(self, group=None, teacher=None, hours=None):
+    def __init__(self, group=None, teacher=None, hours=None, state_solicitation='pendiente'):
         if group and teacher and hours:
             self.teacher = teacher
             self.group = group
             self.hours = hours
-
+            self.state_solicitation = state_solicitation
     def __repr__(self):
         return '<group: (group_cod: {}, subject_cod: {}, area_cod: {}) Teacher: {}>'.format(self.group_cod, self.subject_cod,
                                                                                 self.area_cod, self.teacher_dni)
@@ -156,6 +163,10 @@ class Impart(db.Model):
         except IntegrityError:
             db.session.rollback()
             return False
+
+    def to_dict(self):
+        return {'group_cod': self.group_cod, 'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni':
+                self.teacher_dni, 'assigned_hours': self.hours, 'state_solicitation': self.state_solicitation}
 
 
 class Group(db.Model):
@@ -211,7 +222,9 @@ class Group(db.Model):
         return {
             'group_cod': self.group_cod,
             'subject_cod': self.subject_cod,
-            'type': self.type
+            'area_cod': self.area_cod,
+            'group_type': self.type,
+            'group_hours': self.hours
         }
 
 
@@ -224,19 +237,25 @@ class Teacher(db.Model):
     surnames = db.Column(db.String(64), nullable=True)
     potential = db.Column(db.String(64), nullable=True)
     tutorial_hours = db.Column(db.String(64), nullable=True)
+    username = db.Column(db.String(32), index=True)
+    password = db.Column(db.String(128))
+    public_id = db.Column(db.String(50), unique=True)
 
     group = db.relationship('Impart', back_populates='teacher')
     subject = db.relationship('Coordinator', back_populates='teacher')
     tutorial = db.relationship('Tutorial', uselist=False, back_populates='teacher')
 
-    def __init__(self, dni=None, name=None, surname=None, potential=None, tutorial_hours=None,
-                 cod_area=None):
+    def __init__(self, dni=None, name=None, surname=None, potential=None, tutorial_hours=None, cod_area=None,
+                 username=None, password=None, public_id=None):
         self.dni = dni
         self.name = name
         self.surnames = surname
         self.potential = potential
         self.tutorial_hours = tutorial_hours
         self.area_cod = cod_area
+        self.username = username
+        self.password = password
+        self.public_id = public_id
 
     def __repr__(self):
         return '<Profesor: {}, {}>'.format(self.dni, self.name)
@@ -259,10 +278,23 @@ class Teacher(db.Model):
             db.session.rollback()
             return False
 
+    def to_dict(self):
+        return {'dni': self.dni,
+                'teacher_name': self.name,
+                'teacher_surnames': self.surnames,
+                'teacher_username': self.username,
+                'area_cod': self.area_cod,
+                'teacher_potential': self.potential,
+                'tutorial_hours': self.tutorial_hours}
+
     @staticmethod
-    def get(dni):
+    def get(dni=None):
         if dni:
             return Teacher.query.get(dni)
+
+    @staticmethod
+    def get_username(username=None):
+        return Teacher.query.filter_by(username=username).first()
 
     @staticmethod
     def get_all():
@@ -326,8 +358,9 @@ class UniversityDegree(db.Model):
         return UniversityDegree.query.all()
 
     def to_dict(self):
-        return {'university_degree_cod': self.university_degree_cod, 'acronym': self.acronym, 'name': self.name,
-                'study_center': self.study_center, 'plan_cod': self.plan_cod, 'special_cod': self.special_cod}
+        return {'university_cod': self.university_degree_cod, 'university_acronym': self.acronym,
+                'university_name': self.name, 'university_study_center': self.study_center, 'university_plan_cod':
+                    self.plan_cod, 'university_special_cod': self.special_cod}
 
 
 class KnowledgeArea(db.Model):
@@ -365,6 +398,9 @@ class KnowledgeArea(db.Model):
     def get(area_cod=None):
         if area_cod:
             return KnowledgeArea.query.get(area_cod)
+
+    def to_dict(self):
+        return {'area_cod': self.area_cod, 'area_name': self.name}
 
 
 class PDA(db.Model):

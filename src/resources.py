@@ -164,7 +164,8 @@ class Resource:
                         data['apellidos'][i],
                         data['potencial'][i],
                         data['horas tutorias'][i],
-                        data['Cod Area'][i])
+                        data['Cod Area'][i],
+                        '')
                     if teacher.save():
                         print('Ha sido guardado {}'.format(teacher))
 

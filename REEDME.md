@@ -33,3 +33,13 @@ Para generar las tablas de las bases de datos una vez declarados en el modelo ha
 
 # Archivo xls
 PAra manipular los archivos xls y ser guardados en la base de datos se utiliza la libería ``pip install openpyxl``
+
+## Http basic authentification
+``
+pip install flask-httpauth
+``
+
+## Libería JWT
+``
+pip install Flask-JWT
+``
