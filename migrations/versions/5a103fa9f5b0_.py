@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: fea0783d8420
+Revision ID: 5a103fa9f5b0
 Revises: 
-Create Date: 2019-07-03 00:26:33.589580
+Create Date: 2019-07-19 23:08:59.512681
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'fea0783d8420'
+revision = '5a103fa9f5b0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,42 +25,45 @@ def upgrade():
     )
     op.create_index(op.f('ix_knowledgeArea_name'), 'knowledgeArea', ['name'], unique=True)
     op.create_table('universityDegree',
-    sa.Column('university_degree_cod', sa.String(length=64), nullable=False),
+    sa.Column('university_cod', sa.String(length=64), nullable=False),
     sa.Column('acronym', sa.String(length=64), nullable=True),
     sa.Column('name', sa.String(length=64), nullable=True),
     sa.Column('study_center', sa.String(length=64), nullable=True),
     sa.Column('plan_cod', sa.String(length=64), nullable=True),
     sa.Column('special_cod', sa.String(length=64), nullable=True),
-    sa.PrimaryKeyConstraint('university_degree_cod')
+    sa.PrimaryKeyConstraint('university_cod')
     )
     op.create_index(op.f('ix_universityDegree_acronym'), 'universityDegree', ['acronym'], unique=True)
     op.create_index(op.f('ix_universityDegree_name'), 'universityDegree', ['name'], unique=True)
+    op.create_table('teacher',
+    sa.Column('dni', sa.String(length=64), nullable=False),
+    sa.Column('name', sa.String(length=64), nullable=True),
+    sa.Column('area_cod', sa.String(length=64), nullable=True),
+    sa.ForeignKeyConstraint(['area_cod'], ['knowledgeArea.area_cod'], ),
+    sa.PrimaryKeyConstraint('dni')
+    )
     op.create_table('subject',
     sa.Column('subject_cod', sa.String(length=64), nullable=False),
-    sa.Column('university_degree_cod', sa.String(length=64), nullable=False),
+    sa.Column('coordinator_dni', sa.String(length=64), nullable=True),
+    sa.Column('practice_responsible_dni', sa.String(length=64), nullable=True),
+    sa.Column('university_cod', sa.String(length=64), nullable=True),
     sa.Column('academic_year', sa.String(length=64), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=False),
     sa.Column('course', sa.String(length=64), nullable=False),
     sa.Column('semester', sa.String(length=64), nullable=False),
     sa.Column('type', sa.String(length=64), nullable=False),
-    sa.ForeignKeyConstraint(['university_degree_cod'], ['universityDegree.university_degree_cod'], ),
+    sa.ForeignKeyConstraint(['coordinator_dni'], ['teacher.dni'], ),
+    sa.ForeignKeyConstraint(['practice_responsible_dni'], ['teacher.dni'], ),
+    sa.ForeignKeyConstraint(['university_cod'], ['universityDegree.university_cod'], ),
     sa.PrimaryKeyConstraint('subject_cod')
     )
-    op.create_table('teacher',
-    sa.Column('dni', sa.String(length=64), nullable=False),
-    sa.Column('area_cod', sa.String(length=64), nullable=True),
-    sa.Column('name', sa.String(length=64), nullable=True),
-    sa.Column('surnames', sa.String(length=64), nullable=True),
-    sa.Column('potential', sa.String(length=64), nullable=True),
-    sa.Column('tutorial_hours', sa.String(length=64), nullable=True),
-    sa.Column('username', sa.String(length=32), nullable=True),
-    sa.Column('password', sa.String(length=128), nullable=True),
-    sa.Column('public_id', sa.String(length=50), nullable=True),
+    op.create_table('veniaI',
+    sa.Column('area_cod', sa.String(length=64), nullable=False),
+    sa.Column('teacher_dni', sa.String(length=64), nullable=False),
     sa.ForeignKeyConstraint(['area_cod'], ['knowledgeArea.area_cod'], ),
-    sa.PrimaryKeyConstraint('dni'),
-    sa.UniqueConstraint('public_id')
+    sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
+    sa.PrimaryKeyConstraint('area_cod', 'teacher_dni')
     )
-    op.create_index(op.f('ix_teacher_username'), 'teacher', ['username'], unique=False)
     op.create_table('PDA',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('subject_cod', sa.Integer(), nullable=False),
@@ -70,51 +73,36 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('subject_cod')
     )
-    op.create_table('Venia',
+    op.create_table('belong',
     sa.Column('area_cod', sa.String(length=64), nullable=True),
-    sa.Column('teacher_dni', sa.String(length=64), nullable=True),
+    sa.Column('subject_cod', sa.String(length=64), nullable=True),
     sa.ForeignKeyConstraint(['area_cod'], ['knowledgeArea.area_cod'], ),
-    sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], )
-    )
-    op.create_table('coordinator',
-    sa.Column('subject_cod', sa.String(length=64), nullable=False),
-    sa.Column('teacher_dni', sa.String(length=64), nullable=False),
-    sa.Column('practice_coor', sa.Boolean(), nullable=True),
-    sa.Column('subject_coor', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['subject_cod'], ['subject.subject_cod'], ),
-    sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
-    sa.PrimaryKeyConstraint('subject_cod', 'teacher_dni')
+    sa.ForeignKeyConstraint(['subject_cod'], ['subject.subject_cod'], )
     )
     op.create_table('group',
     sa.Column('group_cod', sa.String(length=64), nullable=False),
     sa.Column('subject_cod', sa.String(length=64), nullable=False),
-    sa.Column('area_cod', sa.String(length=64), nullable=False),
     sa.Column('type', sa.String(length=64), nullable=True),
     sa.Column('hours', sa.String(length=64), nullable=True),
-    sa.ForeignKeyConstraint(['area_cod'], ['knowledgeArea.area_cod'], ),
     sa.ForeignKeyConstraint(['subject_cod'], ['subject.subject_cod'], ),
-    sa.PrimaryKeyConstraint('group_cod', 'subject_cod', 'area_cod')
+    sa.PrimaryKeyConstraint('group_cod', 'subject_cod')
     )
-    op.create_table('tutorial',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('teacher_dni', sa.Integer(), nullable=True),
-    sa.Column('first_semester', sa.String(length=128), nullable=True),
-    sa.Column('second_semester', sa.String(length=128), nullable=True),
-    sa.Column('hours', sa.String(length=64), nullable=True),
+    op.create_table('veniaII',
+    sa.Column('subject_cod', sa.String(length=64), nullable=False),
+    sa.Column('teacher_dni', sa.String(length=64), nullable=False),
+    sa.ForeignKeyConstraint(['subject_cod'], ['subject.subject_cod'], ),
     sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('teacher_dni')
+    sa.PrimaryKeyConstraint('subject_cod', 'teacher_dni')
     )
     op.create_table('impart',
     sa.Column('group_cod', sa.String(length=64), nullable=False),
     sa.Column('subject_cod', sa.String(length=64), nullable=False),
-    sa.Column('area_cod', sa.String(length=64), nullable=False),
     sa.Column('teacher_dni', sa.String(length=64), nullable=False),
     sa.Column('hours', sa.String(length=64), nullable=True),
     sa.Column('state_solicitation', sa.String(length=64), nullable=True),
-    sa.ForeignKeyConstraint(['group_cod', 'subject_cod', 'area_cod'], ['group.group_cod', 'group.subject_cod', 'group.area_cod'], ),
+    sa.ForeignKeyConstraint(['group_cod', 'subject_cod'], ['group.group_cod', 'group.subject_cod'], ),
     sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
-    sa.PrimaryKeyConstraint('group_cod', 'subject_cod', 'area_cod', 'teacher_dni')
+    sa.PrimaryKeyConstraint('group_cod', 'subject_cod', 'teacher_dni')
     )
     # ### end Alembic commands ###
 
@@ -122,14 +110,13 @@ def upgrade():
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('impart')
-    op.drop_table('tutorial')
+    op.drop_table('veniaII')
     op.drop_table('group')
-    op.drop_table('coordinator')
-    op.drop_table('Venia')
+    op.drop_table('belong')
     op.drop_table('PDA')
-    op.drop_index(op.f('ix_teacher_username'), table_name='teacher')
-    op.drop_table('teacher')
+    op.drop_table('veniaI')
     op.drop_table('subject')
+    op.drop_table('teacher')
     op.drop_index(op.f('ix_universityDegree_name'), table_name='universityDegree')
     op.drop_index(op.f('ix_universityDegree_acronym'), table_name='universityDegree')
     op.drop_table('universityDegree')
