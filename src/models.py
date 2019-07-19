@@ -179,6 +179,7 @@ class Teacher(db.Model):
     area = db.relationship('KnowledgeArea', back_populates='teacher')
     veniaI = db.relationship('VeniaI', back_populates='teacher')
     veniaII = db.relationship('VeniaII', back_populates='teacher')
+    user = db.relationship('User', back_populates='teacher')
 
     def __repr__(self):
         return '<Profesor: dni: {}, nombre: {}>'.format(self.dni, self.name)
@@ -283,12 +284,8 @@ class UniversityDegree(db.Model):
         if university_degree_cod:
             return UniversityDegree.query.get(university_degree_cod)
 
-    def add_subject(self, subject=None):
-        if subject:
-            self.subjects.append(subject)
-
     @staticmethod
-    def get_all():
+    def all():
         return UniversityDegree.query.all()
 
     def to_dict(self):
@@ -334,10 +331,6 @@ class PDA(db.Model):
             db.session.rollback()
             return False
 
-    @staticmethod
-    def getAll():
-        return PDA.query.all()
-
     def to_dict(self):
         return {
             'id': self.id,
@@ -345,3 +338,47 @@ class PDA(db.Model):
             'subject_name': self.subject.name,
             'status': self.status,
             'observations': self.observations}
+
+
+class User(db.Model):
+    __tablename__='user'
+
+    id = db.Column(db.String(64), autoincrement=True, primary_key=True)
+    username = db.Column(db.String(64), index=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+    teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), index=True, unique=True, nullable=True)
+
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    public_id = db.Column(db.String(50), unique=True)
+
+    teacher = db.relationship('Teacher', back_populates='user')
+
+    def __init__(self, username=None, password=None, teacher=None, is_admin=False, public_id=None):
+        if username and password and public_id:
+            self.username = username
+            self.password = password
+            self.is_admin = is_admin
+            self.public_id = public_id
+            self.teacher = teacher
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    def to_dict(self):
+        return {'id': self.id, 'username': self.username, 'password': self.password, 'public_id': self.public_id,
+                'teacher_dni': self.teacher_dni}
