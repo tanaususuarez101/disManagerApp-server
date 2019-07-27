@@ -2,8 +2,24 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c39e7c08-bdf2-4994-88f2-2f705e6100cc" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/disManagerApp.db" beforeDir="false" afterPath="$PROJECT_DIR$/disManagerApp.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f2cafc40-eb24-4c94-aac2-caa5a712570e.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f2cafc40-eb24-4c94-aac2-caa5a712570e/storage_v2/_src_/schema/main.uQUzAA.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/disManagerApp-server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/disManagerApp-server.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/disManagerApp.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dismanagerapp.py" beforeDir="false" afterPath="$PROJECT_DIR$/dismanagerapp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/README" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/alembic.ini" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/env.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/script.py.mako" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/versions/5a103fa9f5b0_.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/versions/7ecdfc671a19_.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/resources.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/resources.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -28,16 +44,16 @@
     <expand>
       <path>
         <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
-        <item name="disManagerApp" type="feb32156:DbDataSourceImpl" />
+        <item name="disManagerApp.db" type="feb32156:DbDataSourceImpl" />
       </path>
       <path>
         <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
-        <item name="disManagerApp" type="feb32156:DbDataSourceImpl" />
+        <item name="disManagerApp.db" type="feb32156:DbDataSourceImpl" />
         <item name="schemas" type="d4e8921:DatabaseStructure$FamilyGroup" />
       </path>
       <path>
         <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
-        <item name="disManagerApp" type="feb32156:DbDataSourceImpl" />
+        <item name="disManagerApp.db" type="feb32156:DbDataSourceImpl" />
         <item name="schemas" type="d4e8921:DatabaseStructure$FamilyGroup" />
         <item name="main: schema" type="981a47c2:SqliteImplModel$Schema" />
       </path>
@@ -47,94 +63,6 @@
   <component name="FavoritesManager">
     <favorites_list name="disManagerApp-server" />
   </component>
-  <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/routes.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1559">
-              <caret line="117" selection-start-line="117" selection-end-line="117" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/models.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="170">
-              <caret line="122" selection-start-line="122" selection-end-line="167" selection-end-column="110" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#356#716#0" />
-                <element signature="e#748#1110#0" />
-                <element signature="e#574#1588#0" />
-                <element signature="e#1355#1538#0" />
-                <element signature="e#1625#3460#0" />
-                <element signature="e#2547#2730#0" />
-                <element signature="e#3038#3138#0" />
-                <element signature="e#3185#3209#0" />
-                <element signature="e#3242#3460#0" />
-                <element signature="e#3280#5343#0" />
-                <element signature="e#5598#6336#0" />
-                <element signature="e#4789#4857#0" />
-                <element signature="e#4887#5070#0" />
-                <element signature="e#6347#7501#0" />
-                <element signature="e#5471#5520#0" />
-                <element signature="e#5550#5733#0" />
-                <element signature="e#5765#5951#0" />
-                <element signature="e#6007#6072#0" />
-                <element signature="e#6105#6163#0" />
-                <element signature="e#5108#7168#0" />
-                <element signature="e#8292#9816#0" />
-                <element signature="e#9320#9506#0" />
-                <element signature="e#11618#12952#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/teacher">
-          <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-            <state>
-              <filtering enabled="true">
-                <filter text="dni=44742833" />
-              </filtering>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/knowledgeArea">
-          <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-            <state>
-              <filtering enabled="true" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/subject">
-          <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-            <state>
-              <filtering enabled="true">
-                <filter text="subject_cod=40865" />
-              </filtering>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/dismanagerapp.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-51">
-              <caret line="1" column="24" selection-start-line="1" selection-start-column="24" selection-end-line="1" selection-end-column="24" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
-  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -142,99 +70,31 @@
       </list>
     </option>
   </component>
-  <component name="FindInProjectRecents">
-    <findStrings>
-      <find>get_test</find>
-      <find>areasCo</find>
-      <find>assignedTest = Assigned.get_test(group, subject)</find>
-      <find>Horas</find>
-      <find>get_cod</find>
-      <find>semes</find>
-      <find>subjects</find>
-      <find>group_cod</find>
-      <find>assigned</find>
-      <find>cascade</find>
-      <find>Subject</find>
-      <find>Subject.kno</find>
-      <find>40865</find>
-      <find>make_</find>
-      <find>verify</find>
-      <find>key_secrect</find>
-      <find>auth</find>
-      <find>teacher</find>
-      <find>os</find>
-      <find>token</find>
-      <find>load_teacher</find>
-      <find>tutorial</find>
-      <find>try</find>
-      <find>Teacher</find>
-      <find>login</find>
-      <find>'impart'</find>
-      <find>subject</find>
-      <find>acr</find>
-      <find>/groups</find>
-      <find>impart</find>
-    </findStrings>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="IdeDocumentHistory">
-    <option name="CHANGED_PATHS">
-      <list>
-        <option value="$PROJECT_DIR$/.flaskenv" />
-        <option value="$PROJECT_DIR$/src/files.py" />
-        <option value="$PROJECT_DIR$/config.py" />
-        <option value="$PROJECT_DIR$/src/resources.py" />
-        <option value="$PROJECT_DIR$/src/__init__.py" />
-        <option value="$PROJECT_DIR$/REEDME.md" />
-        <option value="$PROJECT_DIR$/src/routes.py" />
-        <option value="$PROJECT_DIR$/dismanagerapp.py" />
-        <option value="$APPLICATION_CONFIG_DIR$/consoles/.datagrid/cell" />
-        <option value="$PROJECT_DIR$/src/models.py" />
-      </list>
+  <component name="IgnoredFileRootStore">
+    <option name="generatedRoots">
+      <set>
+        <option value="C:\Users\Lenovo\Documents\Project\disManagerApp-server\.idea" />
+      </set>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
-    <option name="width" value="697" />
-    <option name="height" value="376" />
-  </component>
+  <component name="ProjectId" id="1OYIeuIYp3nYQHOVI9T99opu0Ve" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
-  <component name="ProjectView">
-    <navigator proportions="" version="1">
-      <foldersAlwaysOnTop value="true" />
-    </navigator>
-    <panes>
-      <pane id="ProjectPane">
-        <subPane>
-          <expand>
-            <path>
-              <item name="disManagerApp-server" type="b2602c69:ProjectViewProjectNode" />
-              <item name="disManagerApp-server" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="disManagerApp-server" type="b2602c69:ProjectViewProjectNode" />
-              <item name="disManagerApp-server" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
-      <pane id="Scope" />
-    </panes>
-  </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="DatabaseDriversLRU" value="sqlite" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="database.console.LAST_STATE" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.tools" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -281,6 +141,36 @@
         <item itemvalue="Python.dismanagerapp" />
       </list>
     </recent_temporary>
+  </component>
+  <component name="ServiceViewManager">
+    <option name="allServicesViewState">
+      <serviceView>
+        <treeState>
+          <expand>
+            <path>
+              <item name="services root" type="e789fda9:ObjectUtils$Sentinel" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceGroupNode@2d14955b" type="7427dc5b:ServiceModel$ServiceGroupNode" />
+            </path>
+            <path>
+              <item name="services root" type="e789fda9:ObjectUtils$Sentinel" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceGroupNode@2d14955b" type="7427dc5b:ServiceModel$ServiceGroupNode" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceNode@31f100d0" type="9fbbdea:ServiceModel$ServiceNode" />
+            </path>
+            <path>
+              <item name="services root" type="e789fda9:ObjectUtils$Sentinel" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceGroupNode@2d14955b" type="7427dc5b:ServiceModel$ServiceGroupNode" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceNode@a2bc39" type="9fbbdea:ServiceModel$ServiceNode" />
+            </path>
+            <path>
+              <item name="services root" type="e789fda9:ObjectUtils$Sentinel" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceGroupNode@2d14955b" type="7427dc5b:ServiceModel$ServiceGroupNode" />
+              <item name="com.intellij.execution.services.ServiceModel$ServiceNode@4e5481fb" type="9fbbdea:ServiceModel$ServiceNode" />
+            </path>
+          </expand>
+          <select />
+        </treeState>
+      </serviceView>
+    </option>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -443,12 +333,27 @@
       <workItem from="1563482049239" duration="809000" />
       <workItem from="1563529426660" duration="364000" />
       <workItem from="1563541974471" duration="588000" />
-      <workItem from="1563550604631" duration="19738000" />
+      <workItem from="1563550604631" duration="19934000" />
+      <workItem from="1563623560983" duration="2931000" />
+      <workItem from="1563725967546" duration="1441000" />
+      <workItem from="1563729430679" duration="420000" />
+      <workItem from="1563730423644" duration="6712000" />
+      <workItem from="1563794033860" duration="1535000" />
+      <workItem from="1563808692241" duration="2611000" />
+      <workItem from="1563812912832" duration="3049000" />
+      <workItem from="1563816772934" duration="1944000" />
+      <workItem from="1563839000779" duration="4115000" />
+      <workItem from="1563986827725" duration="13883000" />
+      <workItem from="1564015772714" duration="1655000" />
+      <workItem from="1564147673569" duration="218000" />
+      <workItem from="1564148210858" duration="4466000" />
+      <workItem from="1564156600170" duration="16746000" />
+      <workItem from="1564179453385" duration="661000" />
+      <workItem from="1564181965539" duration="2784000" />
+      <workItem from="1564228435611" duration="8352000" />
+      <workItem from="1564238518499" duration="7712000" />
     </task>
     <servers />
-  </component>
-  <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="555407000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -459,418 +364,23 @@
       <is-autoscroll-to-source value="true" />
     </todo-panel>
   </component>
-  <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1382" height="754" extended-state="6" />
-    <editor active="true" />
-    <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49433106" visible="true" weight="0.16944024" />
-      <window_info id="Structure" order="1" sideWeight="0.5041551" side_tool="true" weight="0.14750378" />
-      <window_info id="Favorites" order="2" sideWeight="0.50566894" side_tool="true" weight="0.18003026" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32850242" />
-      <window_info anchor="bottom" id="Debug" order="2" weight="0.36392915" />
-      <window_info anchor="bottom" id="Cvs" order="3" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="4" weight="0.4" />
-      <window_info anchor="bottom" id="Run" order="5" sideWeight="0.49924356" weight="0.3558776" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.32850242" />
-      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32850242" />
-      <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.50075644" side_tool="true" weight="0.27858293" />
-      <window_info anchor="bottom" id="Python Console" order="11" weight="0.32850242" />
-      <window_info anchor="bottom" id="Database Console" order="12" weight="0.21256039" />
-      <window_info anchor="bottom" id="Concurrent Activities Diagram" order="13" weight="0.32850242" />
-      <window_info anchor="bottom" id="Terminal" order="14" sideWeight="0.49924356" visible="true" weight="0.15619968" />
-      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" id="SciView" order="3" />
-      <window_info anchor="right" id="Database" order="4" weight="0.19591528" />
-    </layout>
-    <layout-to-restore>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49584487" weight="0.15506808" />
-      <window_info id="Structure" order="1" sideWeight="0.5041551" side_tool="true" weight="0.14750378" />
-      <window_info id="Favorites" order="2" sideWeight="0.50119907" side_tool="true" weight="0.15355521" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32850242" />
-      <window_info anchor="bottom" id="Debug" order="2" weight="0.19484702" />
-      <window_info anchor="bottom" id="Cvs" order="3" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="4" weight="0.4" />
-      <window_info active="true" anchor="bottom" id="Run" order="5" sideWeight="0.49924356" visible="true" weight="0.3188406" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.32850242" />
-      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32850242" />
-      <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.50075644" side_tool="true" weight="0.27858293" />
-      <window_info anchor="bottom" id="Python Console" order="11" weight="0.32850242" />
-      <window_info anchor="bottom" id="Database Console" order="12" weight="0.17552336" />
-      <window_info anchor="bottom" id="Concurrent Activities Diagram" order="13" weight="0.32850242" />
-      <window_info anchor="bottom" id="Terminal" order="14" sideWeight="0.49924356" weight="0.46698874" />
-      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" id="SciView" order="3" />
-      <window_info anchor="right" id="Database" order="4" visible="true" weight="0.16490166" />
-    </layout-to-restore>
-  </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/resources.py</url>
-          <line>157</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
-  <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/openpyxl/cell/cell.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="246" selection-start-line="246" selection-end-line="246" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/werkzeug/datastructures.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="97">
-          <caret line="2814" selection-start-line="2814" selection-end-line="2814" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/flask/globals.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="96">
-          <caret line="48" selection-start-line="48" selection-end-line="48" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/werkzeug/debug/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="109">
-          <caret line="327" selection-start-line="327" selection-end-line="327" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/werkzeug/debug/tbtools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="109">
-          <caret line="237" selection-start-line="237" selection-end-line="237" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/dynamic.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="79">
-          <caret line="288" selection-start-line="288" selection-end-line="288" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/query.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="87">
-          <caret line="165" selection-start-line="165" selection-end-line="165" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/util/langhelpers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="14314">
-          <caret line="855" selection-start-line="855" selection-end-line="855" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/teachers" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/universityDegrees" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/assigned" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/groups" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/subjects" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/Impart">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/mapper.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="123">
-          <caret line="2045" selection-start-line="2045" selection-end-line="2045" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/Belong_to" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/PracticeCoordinator" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/SubjectCoordinator" />
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/Coordinator">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/flask_sqlalchemy/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="117">
-          <caret line="511" selection-start-line="511" selection-end-line="511" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="110">
-          <caret line="410" selection-start-line="410" selection-end-line="410" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/state.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="93" selection-start-line="93" selection-end-line="93" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/instrumentation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="374" selection-start-line="374" selection-end-line="374" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/util/_collections.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
-          <caret line="1009" selection-start-line="1009" selection-end-line="1009" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/scoping.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="161" selection-start-line="161" selection-end-line="161" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/coordinator">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/resources.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="298">
-          <caret line="167" column="24" selection-start-line="167" selection-start-column="24" selection-end-line="167" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#24#0" expanded="true" />
-            <element signature="e#944#1591#0" />
-            <element signature="e#1646#2899#0" />
-            <element signature="e#2954#3832#0" />
-            <element signature="e#3897#6513#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/flask_cors/extension.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="160" selection-start-line="160" selection-end-line="160" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/flask/app.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="127">
-          <caret line="1694" selection-start-line="1694" selection-end-line="1694" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/flask_httpauth.py" />
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/passlib/context.py" />
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/flask/json/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="87">
-          <caret line="305" selection-start-line="305" selection-end-line="305" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/werkzeug/local.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="370">
-          <caret line="347" selection-start-line="347" selection-end-line="347" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/jwt/api_jwt.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="142">
-          <caret line="60" selection-start-line="60" selection-end-line="60" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/tutorial">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/werkzeug/security.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="123">
-          <caret line="201" selection-start-line="201" selection-end-line="201" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/attributes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="132">
-          <caret line="273" selection-start-line="273" selection-end-line="273" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/REEDME.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="438">
-            <caret line="43" column="21" selection-start-line="43" selection-start-column="21" selection-end-line="43" selection-end-column="21" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/impart">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true">
-            <filter text="teacher_dni=44742833" />
-          </filtering>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="6" selection-start-line="6" selection-end-line="6" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/group">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true">
-            <filter text="group_cod=146" />
-          </filtering>
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/PDA">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/belong">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dismanagerapp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-51">
-          <caret line="1" column="24" selection-start-line="1" selection-start-column="24" selection-end-line="1" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/sqlalchemy/orm/relationships.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="145">
-          <caret line="1844" selection-start-line="1844" selection-end-line="1844" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/universityDegree">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/subject">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true">
-            <filter text="subject_cod=40865" />
-          </filtering>
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/knowledgeArea">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="das://f2cafc40-eb24-4c94-aac2-caa5a712570e/schema/main/table/teacher">
-      <provider selected="true" editor-type-id="com.intellij.database.editor.DatabaseTableFileEditorProvider">
-        <state>
-          <filtering enabled="true">
-            <filter text="dni=44742833" />
-          </filtering>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/routes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1559">
-          <caret line="117" selection-start-line="117" selection-end-line="117" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="122" selection-start-line="122" selection-end-line="167" selection-end-column="110" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#356#716#0" />
-            <element signature="e#748#1110#0" />
-            <element signature="e#574#1588#0" />
-            <element signature="e#1355#1538#0" />
-            <element signature="e#1625#3460#0" />
-            <element signature="e#2547#2730#0" />
-            <element signature="e#3038#3138#0" />
-            <element signature="e#3185#3209#0" />
-            <element signature="e#3242#3460#0" />
-            <element signature="e#3280#5343#0" />
-            <element signature="e#5598#6336#0" />
-            <element signature="e#4789#4857#0" />
-            <element signature="e#4887#5070#0" />
-            <element signature="e#6347#7501#0" />
-            <element signature="e#5471#5520#0" />
-            <element signature="e#5550#5733#0" />
-            <element signature="e#5765#5951#0" />
-            <element signature="e#6007#6072#0" />
-            <element signature="e#6105#6163#0" />
-            <element signature="e#5108#7168#0" />
-            <element signature="e#8292#9816#0" />
-            <element signature="e#9320#9506#0" />
-            <element signature="e#11618#12952#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/disManagerApp_server$dismanagerapp.coverage" NAME="dismanagerapp Coverage Results" MODIFIED="1564249416829" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

@@ -1,6 +1,6 @@
 from src import app, db
 #from src.models import  Tutorial
-from src.models import Subject, Teacher, Group, Impart, KnowledgeArea, PDA, UniversityDegree
+from src.models import Subject, Teacher, Group, Impart, KnowledgeArea, PDA, UniversityDegree, User, Tutorial
 
 #KnowledgeAreas,  PDA, , Have,
 
@@ -13,7 +13,9 @@ def make_shell_context():
             'Impart': Impart,
             'KnowledgeArea': KnowledgeArea,
             'UniversityDegree': UniversityDegree,
-            'PDA': PDA
+            'PDA': PDA,
+            'User': User,
+            'Tutorial': Tutorial
             }
 
 
