@@ -195,20 +195,26 @@ class Resource:
 
     @staticmethod
     def import_teacher(data=None):
-        if data:
-            for i in range(0, len(data['dni'])):
-                teacher = Teacher.get(data['dni'][i])
-                if not teacher:
-                    teacher = Teacher(
-                        data['dni'][i],
-                        data['nombre'][i],
-                        data['apellidos'][i],
-                        data['potencial'][i],
-                        data['horas tutorias'][i],
-                        data['Cod Area'][i],
-                        '')
-                    if teacher.save():
-                        print('Ha sido guardado {}'.format(teacher))
+        if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas tutorias', 'Cod Area'],
+                                      data.keys()):
+            return ''
+
+        for i in range(0, len(data['dni'])): # TODO - formatear nombres en minuculas y quitar espacio
+            if not data['dni'] and not data['nombre'] and not data['apellidos'] and not data['potencial'] \
+                    and not data['horas tutorias'] and data['Cod Area']:
+                continue
+
+            if Teacher.get(data['dni'][i]) is None:
+                area = KnowledgeArea.get(data['Cod Area'][i])
+                if area:
+                    teacher = Teacher(dni=data['dni'][i],
+                                      name=data['nombre'][i],
+                                      surnames=data['apellidos'][i],
+                                      potential=data['potencial'][i],
+                                      tutorial_hours=data['horas tutorias'][i],
+                                      area=area)
+                    teacher.save()
+
 
     @staticmethod
     def import_pda(data=None):
@@ -253,3 +259,11 @@ class Resource:
     @staticmethod
     def join_file(filename):
         return os.path.join(UPLOADS_DIR, filename)
+
+
+def contains_keys(list_keys=[], data_keys=None):
+    if len(list_keys) > 0 and data_keys:
+        for key in list_keys:
+            if key not in data_keys:
+                return False
+        return True

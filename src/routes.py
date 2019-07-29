@@ -63,7 +63,7 @@ def get_all_teacher_load(current_user):
             group = Group.get(impart.area_cod, impart.subject_cod, impart.group_cod)
             cover_hours += float(group.hours)
 
-        dict_teacher = Resource.build_dict(teacher=teacher, area=teacher.area)
+        dict_teacher = Resource.build_dict(teacher=teacher, area=teacher.knowledgeArea)
         dict_teacher.update({'cover_hours': cover_hours})
         dict_teacher.update({'unassigned_hours': float(cover_hours) - float(teacher.potential)})
         list_teacher.append(dict_teacher)
@@ -223,7 +223,7 @@ def get_all_tutorials(current_user):
     list_tutorial, output = [], {}
     for teacher in Teacher.all():
         if teacher.tutorial:
-            output = Resource.build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.area)
+            output = Resource.build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.knowledgeArea)
             print(output)
             output.update({'cover_hours': float(teacher.tutorial.hours)})
             output.update({'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
@@ -253,7 +253,7 @@ def login():
 
         user_dict = user.to_dict()
         if user.teacher:
-            teacher_dict = Resource.build_dict(teacher=user.teacher, area=user.teacher.area)
+            teacher_dict = Resource.build_dict(teacher=user.teacher, area=user.teacher.knowledgeArea)
             user_dict.update(teacher_dict)
 
         return make_response(jsonify({'token': token.decode('UTF-8'), 'user': user_dict}))
@@ -264,37 +264,37 @@ def login():
 @app.route('/sign-in', methods=['POST'])
 def create_user():
     data = request.get_json()
-    user_created = False
 
-    if data and 'username' in data.keys() and 'password' in data.keys() and 'admin' in data.keys():
-        user = User.get(username=data['username']) #will search by dni or username
-        if not user:
-            hashed_password = generate_password_hash(data['password'], method='sha256')
-            user = User(data['username'], hashed_password, data['admin'], str(uuid.uuid4()))
-            if not user.save():
-                return make_response(jsonify({'message': 'Teacher could not have been created!'}))
-            user_created = True
+    if data and contains_keys(['username', 'password', 'admin'], data.keys()):
+        user = User.get(username=data['username'])
+        if user:
+            return make_response(jsonify({'message': 'User already exists'}), 301)
 
-    if data and 'dni' in data.keys() and 'name' in data.keys() and 'surnames' in data.keys()\
-            and 'potential' in data.keys() and 'tutorial_hours' in data.keys():
+        hashed_password = generate_password_hash(data['password'], method='sha256')
+        user = User(data['username'], hashed_password, data['admin'], str(uuid.uuid4()))
 
-            user = User.get(username=data['username'])
-            if not user:
-                return make_response(jsonify({'message': 'User could not been find'}), 404)
+        if 'dni' in data.keys() and data['dni']:
+            teacher = Teacher.get(data['dni'])
+            if teacher:
+                user.teacher = teacher
+                if user.save():
+                    return make_response(jsonify({'message': 'User and Teacher have been created!'}), 201)
+                else:
+                    return make_response(jsonify({'message': 'User and Teacher could not have been created!'}), 401)
 
-            area = KnowledgeArea.get(data['area_cod'])
-            if not area:
-                return make_response(jsonify({'message': 'Knowledge Area could not been find'}), 404)
+            if contains_keys(['name', 'surnames', 'potential', 'tutorial_hours', 'area_cod'], data.keys()):
+                area = KnowledgeArea.get(data['area_cod'])
+                if not area:
+                    return make_response(jsonify({'message': 'Knowledge Area could not been find'}), 404)
 
-            teacher = Teacher(data['dni'], data['name'], data['surnames'], data['potential'], data['tutorial_hours'],
-                              data['area_cod'])
-            user.teacher = teacher
-
-            if teacher.save():
-                return make_response(jsonify({'message': 'New teacher created'}), 201)
-
-    if user_created:
-        return make_response(jsonify({'message': 'New user created'}), 201)
+                teacher = Teacher(data['dni'], data['name'], data['surnames'], data['potential'], data['tutorial_hours']
+                                  , area)
+                user.teacher = teacher
+                if teacher.save():
+                    return make_response(jsonify({'message': 'Teacher created'}), 201)
+        else:
+            if user.save():
+                return make_response(jsonify({'message': 'User created'}), 201)
 
     return make_response(jsonify({'message': 'User could not have been created!'}), 404)
 
@@ -411,25 +411,27 @@ def upload_teacher():
         # check if the post request has the file part
         try:
             if 'file' not in request.files:
-                return ''
+
+                return make_response(jsonify({'message': 'File not found'}), 404)
 
             request_file = request.files['file']
+            print(request_file)
             if request_file and allowed_file(request_file.filename):
                 filename = secure_filename(request_file.filename)
                 filename_dir = os.path.join(UPLOADS_DIR, filename)
                 request_file.save(filename_dir)
 
                 data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+                print(data_file)
                 Resource.import_teacher(data_file)
                 print(data_file)
                 os.remove(filename_dir)
 
-                return jsonify(), 200
+                return make_response(jsonify({'message': 'List teacher saved'}), 201)
             else:
-                return Response('File not found', status=404)
+                return make_response(jsonify({'message': 'File not found'}), 404)
         except Exception as error:
-            print(error)
-            return Response('Internal Server Error', status=500)
+            return make_response(jsonify({'message': 'Internal Server Error'}), 500)
 
     return '''
     <!doctype html>

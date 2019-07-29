@@ -260,19 +260,19 @@ class Teacher(db.Model):
     tutorial_hours = db.Column(db.String(64), nullable=True)
 
     group = db.relationship('Impart', back_populates='teacher')
-    area = db.relationship('KnowledgeArea', back_populates='teacher')
+    knowledgeArea = db.relationship('KnowledgeArea', back_populates='teacher', uselist=False)
     veniaI = db.relationship('VeniaI', back_populates='teacher')
     veniaII = db.relationship('VeniaII', back_populates='teacher')
     user = db.relationship('User', back_populates='teacher')
     tutorial = db.relationship('Tutorial', back_populates='teacher', uselist=False)
 
-    def __init__(self, dni=None, name=None, surnames=None, potential=None, tutorial_hours=None, area_cod=None):
+    def __init__(self, dni=None, name=None, surnames=None, potential=None, tutorial_hours=None, area=None):
         self.dni = dni
         self.name = name
         self.surnames = surnames
         self.potential = potential
         self.tutorial_hours = tutorial_hours
-        self.area_cod = area_cod
+        self.knowledgeArea = area
 
     def __repr__(self):
         return '<Profesor: dni: {}, nombre: {}>'.format(self.dni, self.name)
@@ -281,10 +281,9 @@ class Teacher(db.Model):
         try:
             db.session.add(self)
             db.session.commit()
-            return True
+            return self
         except IntegrityError:
             db.session.rollback()
-            return False
 
     @staticmethod
     def all():
@@ -306,7 +305,7 @@ class KnowledgeArea(db.Model):
     area_cod = db.Column(db.String(64), primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
 
-    teacher = db.relationship('Teacher', backref='knowledgeArea', cascade="all,delete")
+    teacher = db.relationship('Teacher', back_populates='knowledgeArea', cascade="all,delete")
     subject = db.relationship('Subject', back_populates="knowledgeArea", cascade='all,delete')
 
     veniaI = db.relationship('VeniaI', back_populates='knowledgeArea')
