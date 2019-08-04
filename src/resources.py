@@ -218,11 +218,14 @@ class Resource:
 
     @staticmethod
     def import_pda(data=None):
-        if data:
-            for i in range(0, len(data['Cod Asignatura'])):
-                pda = PDA(data['Cod Asignatura'][i], data['Estado'][i], data['Observaciones'][i])
-                if pda.save():
-                    print('Ha sido guardado {}'.format(pda))
+        if not data or (data and not contains_keys(['Cod Asignatura', 'Cod Area', 'Estado', 'Observaciones'], data.keys())):
+            return ''
+
+        for i in range(0, len(data['Cod Asignatura'])):
+            subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
+            if subject:
+                pda = PDA(subject, data['Estado'][i], data['Observaciones'][i])
+                pda.save()
 
     @staticmethod
     def file_statistics(data=None):

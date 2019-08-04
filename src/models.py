@@ -1,6 +1,6 @@
 from src import db, app
 from sqlalchemy.exc import IntegrityError
-
+import json
 '''
     Entities Relationships 
 '''
@@ -163,8 +163,8 @@ class Subject(db.Model):
         self.subject_cod = subject_cod
         self.area_cod = area_cod
         self.university_cod = university_cod
-        self.name = name
-        self.type = type
+        self.name = name if not name else name.lower()
+        self.type = type if not type else type.lower()
         self.semester = semestre
         self.course = course
         self.academic_year = academic_year
@@ -418,8 +418,8 @@ class PDA(db.Model):
 
     def __init__(self, subject=None, status='pendiente', observations=None):
         self.subject = subject
-        self.status = status
-        self.observations = observations
+        self.status = status if not status else status.lower()
+        self.observations = observations if not observations else status.lower()
 
     def __repr__(self):
         return '<PDA id: {}, subject_cod: {}, status: {}, observations: {} >'.format(self.id, self.subject_cod,
@@ -453,7 +453,6 @@ class PDA(db.Model):
 
     def to_dict(self):
         return {
-            'pda_id': self.id,
             'subject_cod': self.subject_cod,
             'subject_name': self.subject.name,
             'pda_status': self.status,
@@ -516,18 +515,20 @@ class Tutorial(db.Model):
     __tablename__ = "tutorial"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), index=True, unique=True, nullable=True)
+    teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), index=True, unique=True, nullable=False)
     first_semester = db.Column(db.String(128))
     second_semester = db.Column(db.String(128))
     hours = db.Column(db.String(50))
 
     teacher = db.relationship('Teacher', back_populates='tutorial', uselist=False)
 
-    def __init__(self, teacher=None, first_semester=None, second_semester=False, hours=None):
-        self.teacher = teacher
-        self.first_semester = first_semester
-        self.second_semester = second_semester
+    def __init__(self, first_semester=None, second_semester=None, hours=None):
         self.hours = hours
+
+        if first_semester:
+            self.first_semester = first_semester
+        if second_semester:
+            self.second_semester = second_semester
 
     def save(self):
         try:
@@ -553,5 +554,5 @@ class Tutorial(db.Model):
             return Tutorial.query.filter_by(teacher_dni=dni).first()
 
     def to_dict(self):
-        return {'id': self.id, 'teacher_dni': self.teacher_dni, 'first_semester': self.first_semester,
-                'second_semester': self.second_semester, 'hours': self.hours}
+        return {'first_semester': json.loads(self.first_semester), 'second_semester': json.loads(self.second_semester),
+                'hours': self.hours}

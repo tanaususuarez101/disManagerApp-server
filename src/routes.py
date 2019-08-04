@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from src.resources import *
 from datetime import *
 from functools import wraps
+import json
 
 import jwt
 import os
@@ -86,8 +87,9 @@ def get_one_teacher_load(current_user, dni=None):
                                          university=impart.group.subject.university_degree)
             output.update(Resource.teacher_cover_hours(impart.group))
             list_group.append(output)
-
-    return make_response(jsonify({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames, 'groups': list_group}), 201)
+        return make_response(jsonify({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames,
+                                      'groups': list_group}), 201)
+    return make_response(jsonify({'message': 'teacher not found'}), 401)
 
 
 @app.route('/teacher_load', methods=['POST'])
@@ -224,11 +226,51 @@ def get_all_tutorials(current_user):
     for teacher in Teacher.all():
         if teacher.tutorial:
             output = Resource.build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.knowledgeArea)
-            print(output)
-            output.update({'cover_hours': float(teacher.tutorial.hours)})
-            output.update({'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
+            if teacher.tutorial.hours and teacher.tutorial_hours:
+                output.update({'cover_hours': float(teacher.tutorial.hours)})
+                output.update({'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
             list_tutorial.append(output)
     return make_response(jsonify(list_tutorial), 201)
+
+
+@app.route('/tutorial/<dni>', methods=['GET'])
+@token_required
+def get_tutorial(current_user, dni=None):
+    teacher = Teacher.get(dni)
+    return make_response(jsonify(teacher.tutorial.to_dict()), 201) if teacher else \
+        make_response(jsonify({'message': 'Data not found'}), 404)
+
+
+@app.route('/tutorial', methods=['POST'])
+@token_required
+def create_tutorial(current_user):
+    data = request.get_json()
+
+    if data:
+        if not contains_keys(['first_semester', 'second_semester', 'hours'], data.keys()):
+            return make_response(jsonify({'message': 'data not found'}), 404)
+
+        if not current_user.teacher_dni:
+            return make_response(jsonify({'message': 'User is not teacher'}), 404)
+
+        teacher = Teacher.get(current_user.teacher_dni)
+        if not teacher:
+            return make_response(jsonify({'message': 'Teacher not found'}), 404)
+
+        print(data)
+
+        if teacher.tutorial:
+            teacher.tutorial.delete()
+
+        teacher.tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
+                                    second_semester=json.dumps(data['second_semester']),
+                                    hours=data['hours'])
+        if teacher.save():
+            return make_response(jsonify({'message': 'Tutorial has been saved'}), 201)
+
+    return make_response(jsonify({'message': 'Error saved data'}), 201)
+
+
 
 
 '''
@@ -365,8 +407,6 @@ def upload_database():
                 data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
                 entity_file = Resource.file_statistics(data_file)
                 data_saved = Resource.import_database(data_file)
-                print('Entidades del fichero: {}'.format(data_saved))
-
                 os.remove(filename_dir)
 
                 return make_response(jsonify(data_saved), 200)
@@ -495,7 +535,7 @@ def upload_pda():
                 print(data_file)
                 os.remove(filename_dir)
 
-                return jsonify(), 200
+                return make_response(jsonify({'message': 'saved'}), 201)
             else:
                 return make_response(jsonify({'error': 'Not found'}), 404)
         except Exception as error:
