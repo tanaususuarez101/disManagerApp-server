@@ -51,6 +51,10 @@ class Impart(db.Model):
         except IntegrityError:
             db.session.rollback()
             return False
+    @staticmethod
+    def get(group=None, teacher=None):
+        if group and teacher:
+            return Impart.query.get([group.group_cod, group.subject_cod, group.area_cod, teacher.dni])
 
     def to_dict(self):
         return {'group_cod': self.group_cod, 'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni':

@@ -235,7 +235,7 @@ class Resource:
 
     @staticmethod
     def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None,
-                   tutorial=None, impart=None, veniaI=None, veniaII=None ):
+                   tutorial=None, impart=None, veniaI=None, veniaII=None):
 
         output_dict = {}
         output_dict.update(teacher.to_dict()) if teacher else output_dict
@@ -257,7 +257,7 @@ class Resource:
             cover_hour = 0
             for impart in group.teacher:
                 cover_hour += float(impart.hours)
-            return {"cover_hours": cover_hour - float(group.hours)}
+            return {"group_cover_hours": cover_hour - float(group.hours)}
 
     @staticmethod
     def join_file(filename):

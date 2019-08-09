@@ -74,27 +74,28 @@ def get_all_teacher_load(current_user):
 
 @app.route('/teacher_load/<dni>', methods=['GET'])
 @token_required
-def get_one_teacher_load(current_user, dni=None):
+def get_teacher_load(user, dni=None):
 
     list_group, teacher = [], Teacher.get(dni)
-    if teacher:
-        for impart in teacher.group:
-            output = Resource.build_dict(teacher=teacher,
-                                         impart=impart,
-                                         group=impart.group,
-                                         subject=impart.group.subject,
-                                         area=impart.group.subject.knowledgeArea,
-                                         university=impart.group.subject.university_degree)
-            output.update(Resource.teacher_cover_hours(impart.group))
-            list_group.append(output)
-        return make_response(jsonify({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames,
-                                      'groups': list_group}), 201)
-    return make_response(jsonify({'message': 'teacher not found'}), 401)
+    if not teacher:
+        return make_response(jsonify({'message': 'Techer not found'}), 404)
+
+    for impart in teacher.group:
+        output = Resource.build_dict(teacher=teacher,
+                                     impart=impart,
+                                     group=impart.group,
+                                     subject=impart.group.subject,
+                                     area=impart.group.subject.knowledgeArea,
+                                     university=impart.group.subject.university_degree)
+        output.update(Resource.teacher_cover_hours(impart.group))
+        list_group.append(output)
+    return make_response(jsonify({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames,
+                                  'groups': list_group}), 201)
 
 
 @app.route('/teacher_load', methods=['POST'])
 @token_required
-def post_list_teacher_load(current_user):
+def post_list_teacher_load(user):
     data = request.get_json()
     if not data:
         return make_response(jsonify({'message': 'Data not found'}), 401)
@@ -104,13 +105,32 @@ def post_list_teacher_load(current_user):
             group = Group.get(item['area_cod'], item['subject_cod'], item['group_cod'])
             if group:
                 print(item)
-                impart = Impart(group, current_user.teacher, item['selected_hours'])
+                impart = Impart(group, user.teacher, item['impart_hours'])
                 impart.save()
 
         return make_response(jsonify({'message': 'Data saved'}), 201)
 
     except:
         return make_response(jsonify({'message': 'There has been some error'}), 501)
+
+
+@app.route('/teacher_load/<area_cod>/<subject_cod>/<group_cod>', methods=['DELETE'])
+@token_required
+def delete_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None):
+
+    if not area_cod and not subject_cod and not group_cod:
+        return make_response(jsonify({'message': 'Param not found'}), 404)
+
+    group, teacher = Group.get(area_cod, subject_cod, group_cod), user.teacher
+    impart = Impart.get(group, teacher)
+    if impart:
+        impart.delete()
+        return make_response(jsonify({'message': 'Teacher load deleted successfully'}), 201)
+
+    return make_response(jsonify({'message': 'Teacher load delete error'}), 404)
+
+
+
 
 
 '''
@@ -120,7 +140,7 @@ def post_list_teacher_load(current_user):
 
 @app.route('/groups', methods=['GET'])
 @token_required
-def get_all_groups(current_user):
+def get_groups(current_user):
 
     subject_list = []
     for group in Group.all():
@@ -142,16 +162,9 @@ def get_one_group(current_user, area_cod=None, subject_cod=None, group_cod=None)
     if group:
         output_teacher, teacher, cover_hour = {},  [], 0
         for impart in group.teacher:
-            print(impart.teacher.name)
             cover_hour += float(impart.hours)
             output_teacher = Resource.build_dict(teacher=impart.teacher, impart=impart)
             output_teacher.update(Resource.teacher_cover_hours(impart.group))
-            print(output_teacher)
-            '''
-            output_teacher['teacher_name'] = impart.teacher.name
-            output_teacher['teacher_surname'] = impart.teacher.surnames
-            output_teacher['teacher_assigned'] = impart.hours
-            '''
             teacher.append(output_teacher)
 
         output_request = Resource.build_dict(subject=group.subject,
@@ -165,11 +178,26 @@ def get_one_group(current_user, area_cod=None, subject_cod=None, group_cod=None)
 
 
 '''
-    PDA
+    SUBJECT
 '''
 
 
-@app.route('/pda', methods=['GET'])
+@app.route('/subject', methods=['GET'])
+@token_required
+def get_subjects(current_user):
+    output = []
+    for subject in Subject.all():
+        titulacion = subject.university_degree
+        area = subject.knowledgeArea
+        subject = subject.to_dict()
+        subject.update(titulacion.to_dict())
+        subject.update(area.to_dict())
+        output.append(subject)
+
+    return make_response(jsonify({'subject': output}), 201)
+
+
+@app.route('/subject/pda', methods=['GET'])
 @token_required
 def get_all_pda(current_user):
     list_pda, output = [], {}
@@ -187,11 +215,128 @@ def get_all_pda(current_user):
     return make_response(jsonify(list_pda), 201)
 
 
-'''
-    COORDINATOR AND RESPONSIBLE
-'''
+@app.route('/subject/coordinator', methods=['GET'])
+@token_required
+def get_coordinator(user):
+    coordinator_list = []
+
+    for subject in Subject.all():
+        coordinator_dict = Resource.build_dict(subject=subject, university=subject.university_degree,
+                                               area=subject.knowledgeArea, teacher=subject.coordinator)
+        coordinator_list.append(coordinator_dict)
+    return make_response(jsonify(coordinator_list), 201)
 
 
+@app.route('/subject/responsible', methods=['GET'])
+@token_required
+def get_responsible(user):
+    responsible_list = []
+
+    for subject in Subject.all():
+        responsible_dict = Resource.build_dict(subject=subject, university=subject.university_degree,
+                                               area=subject.knowledgeArea, teacher=subject.responsible)
+        responsible_list.append(responsible_dict)
+
+    return make_response(jsonify(responsible_list), 201)
+
+
+@app.route('/subject/coordinator', methods=['POST'])
+@token_required
+def add_coordinator(user):
+
+    data = request.get_json()
+    if data and user.teacher:
+
+        teacher = user.teacher
+        for sub in Subject.query.filter_by(coordinator_dni=teacher.dni).all():
+            sub.coordinator = None
+            sub.save()
+
+        for sub in Subject.query.filter_by(responsible_dni=teacher.dni).all():
+            sub.responsible = None
+            sub.save()
+
+        data_infor = []
+        if 'coordinator' in data.keys():
+            for obj in data['coordinator']:
+                if contains_keys(['subject_cod', 'area_cod'], obj.keys()):
+                    subject = Subject.get(obj['subject_cod'], obj['area_cod'])
+                    if subject.coordinator and subject.coordinator not in teacher:
+                        data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
+                                           'message': 'Error replacing coordinator'})
+                    subject.coordinator = teacher
+                    if subject.save():
+                        data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
+                                           'message': 'Added new coordinator'})
+
+        if 'responsible' in data.keys():
+
+            for obj in data['responsible']:
+                if contains_keys(['subject_cod', 'area_cod'], obj.keys()):
+                    subject = Subject.get(obj['subject_cod'], obj['area_cod'])
+                    if subject.responsible and subject.responsible not in teacher:
+                        data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
+                                           'message': 'Error replacing coordinator'})
+                    subject.responsible = teacher
+                    if subject.save():
+                        data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
+                                           'message': 'Added new responsible'})
+
+        return make_response(jsonify(data_infor), 201)
+
+    return make_response(jsonify({'message': 'Have had any errors'}), 404)
+
+
+@app.route('/subject/responsible', methods=['POST'])
+@token_required
+def add_responsible(user):
+
+    data = request.get_json()
+    if data and user.teacher:
+
+        teacher = user.teacher
+        for sub in Subject.query.filter_by(responsible_dni=teacher.dni).all():
+            sub.responsible = None
+            sub.save()
+
+        data_infor = []
+        if 'responsible' in data.keys():
+
+            for obj in data['responsible']:
+                if contains_keys(['subject_cod', 'area_cod'], obj.keys()):
+                    subject = Subject.get(obj['subject_cod'], obj['area_cod'])
+                    subject.responsible = teacher
+                    if subject.save():
+                        data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
+                                           'message': 'Added new responsible'})
+        return make_response(jsonify(data_infor), 201)
+
+    return make_response(jsonify({'message': 'Have had any errors'}), 404)
+
+
+@app.route('/teacher/coordinator/<dni>', methods=['GET'])
+@token_required
+def get_teacher_coordinator(user, dni=None):
+
+    if dni:
+        subject_all = Subject.query.filter_by(coordinator_dni=dni).all()
+        responsible_list = [subject.to_dict() for subject in subject_all]
+        return make_response(jsonify(responsible_list), 201)
+    return make_response(jsonify({}), 404)
+
+
+@app.route('/teacher/responsible/<dni>', methods=['GET'])
+@token_required
+def get_teacher_responsible(user, dni=None):
+
+    if dni:
+        subject_all = Subject.query.filter_by(responsible_dni=dni).all()
+        resp_subject = [subject.to_dict() for subject in subject_all]
+        return make_response(jsonify(resp_subject), 201)
+    return make_response(jsonify({}), 404)
+
+
+'''
 @app.route('/coordinator', methods=['GET'])
 @token_required
 def get_all_coordinator(current_user):
@@ -211,70 +356,28 @@ def get_all_coordinator(current_user):
         responsible_list.append(responsible_dict)
 
     return make_response(jsonify({'subject': coordinator_list, 'practice': responsible_list}), 201)
+'''
+
+'''
+@app.route('/teacher/coordinator/<dni>', methods=['GET'])
+@token_required
+def get_teacher_coordinator(user, dni=None):
+
+    if dni:
+        subject_all = Subject.query.filter_by(responsible_dni=dni, coordinator_dni=dni).all()
+        output = [subject.to_dict() for subject in subject_all]
+        subject_all = Subject.query.filter_by(responsible_dni=dni, coordinator_dni=None).all()
+        resp_subject = [subject.to_dict() for subject in subject_all]
+        subject_all = Subject.query.filter_by(responsible_dni=None, coordinator_dni=dni).all()
+        coor_subject = [subject.to_dict() for subject in subject_all]
+
+        return make_response(jsonify(output + resp_subject + coor_subject), 201)
+    return make_response(jsonify({}), 404)
+'''
 
 
 '''
-    TUTORIAL
-'''
-
-
-@app.route('/tutorial', methods=['GET'])
-@token_required
-def get_all_tutorials(current_user):
-
-    list_tutorial, output = [], {}
-    for teacher in Teacher.all():
-        if teacher.tutorial:
-            output = Resource.build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.knowledgeArea)
-            if teacher.tutorial.hours and teacher.tutorial_hours:
-                output.update({'cover_hours': float(teacher.tutorial.hours)})
-                output.update({'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
-            list_tutorial.append(output)
-    return make_response(jsonify(list_tutorial), 201)
-
-
-@app.route('/tutorial/<dni>', methods=['GET'])
-@token_required
-def get_tutorial(current_user, dni=None):
-    teacher = Teacher.get(dni)
-    return make_response(jsonify(teacher.tutorial.to_dict()), 201) if teacher else \
-        make_response(jsonify({'message': 'Data not found'}), 404)
-
-
-@app.route('/tutorial', methods=['POST'])
-@token_required
-def create_tutorial(current_user):
-    data = request.get_json()
-
-    if data:
-        if not contains_keys(['first_semester', 'second_semester', 'hours'], data.keys()):
-            return make_response(jsonify({'message': 'data not found'}), 404)
-
-        if not current_user.teacher_dni:
-            return make_response(jsonify({'message': 'User is not teacher'}), 404)
-
-        teacher = Teacher.get(current_user.teacher_dni)
-        if not teacher:
-            return make_response(jsonify({'message': 'Teacher not found'}), 404)
-
-        print(data)
-
-        if teacher.tutorial:
-            teacher.tutorial.delete()
-
-        teacher.tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
-                                    second_semester=json.dumps(data['second_semester']),
-                                    hours=data['hours'])
-        if teacher.save():
-            return make_response(jsonify({'message': 'Tutorial has been saved'}), 201)
-
-    return make_response(jsonify({'message': 'Error saved data'}), 201)
-
-
-
-
-'''
-    RESTFUL USER
+    USER
 '''
 
 
@@ -346,18 +449,18 @@ def create_user():
 '''
 
 
-@app.route('/teacher', methods=['GET'])
+@app.route('/user', methods=['GET'])
 @token_required
-def get_one_teacher(current_user):
+def get_teacher(user):
     try:
-        return make_response(jsonify(current_user.to_dict()), 201)
+        return make_response(jsonify(user.to_dict()), 201)
     except:
         return make_response(jsonify({}), 500)
 
 
 @app.route('/teacher', methods=['PUT'])
 @token_required
-def update_one_teacher(current_user):
+def update_teacher(current_user):
     data = request.get_json()
     if data:
         current_user.password = generate_password_hash(data['password'], method='sha256')
@@ -367,6 +470,59 @@ def update_one_teacher(current_user):
             return make_response(jsonify({'message': 'data could not update'}), 401)
     else:
         return make_response(jsonify({'message': 'no data found'}), 401)
+
+
+@app.route('/teacher/tutorial', methods=['GET'])
+@token_required
+def get_tutorials(current_user):
+
+    list_tutorial, output = [], {}
+    for teacher in Teacher.all():
+        if teacher.tutorial:
+            output = Resource.build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.knowledgeArea)
+            if teacher.tutorial.hours and teacher.tutorial_hours:
+                output.update({'cover_hours': float(teacher.tutorial.hours)})
+                output.update({'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
+            list_tutorial.append(output)
+    return make_response(jsonify(list_tutorial), 201)
+
+
+@app.route('/teacher/tutorial/<dni>', methods=['GET'])
+@token_required
+def get_teacher_tutorial(current_user, dni=None):
+    teacher = Teacher.get(dni)
+    return make_response(jsonify(teacher.tutorial.to_dict()), 201) if teacher else \
+        make_response(jsonify({'message': 'Data not found'}), 404)
+
+
+@app.route('/teacher/tutorial', methods=['POST'])
+@token_required
+def create_tutorial(current_user):
+    data = request.get_json()
+
+    if data:
+        if not contains_keys(['first_semester', 'second_semester', 'hours'], data.keys()):
+            return make_response(jsonify({'message': 'data not found'}), 404)
+
+        if not current_user.teacher_dni:
+            return make_response(jsonify({'message': 'User is not teacher'}), 404)
+
+        teacher = Teacher.get(current_user.teacher_dni)
+        if not teacher:
+            return make_response(jsonify({'message': 'Teacher not found'}), 404)
+
+        print(data)
+
+        if teacher.tutorial:
+            teacher.tutorial.delete()
+
+        teacher.tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
+                                    second_semester=json.dumps(data['second_semester']),
+                                    hours=data['hours'])
+        if teacher.save():
+            return make_response(jsonify({'message': 'Tutorial has been saved'}), 201)
+
+    return make_response(jsonify({'message': 'Error saved data'}), 201)
 
 
 '''
