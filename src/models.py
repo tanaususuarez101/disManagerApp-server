@@ -1,5 +1,6 @@
 from src import db, app
 from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash
 import json
 '''
     Entities Relationships 
@@ -289,6 +290,30 @@ class Teacher(db.Model):
         except IntegrityError:
             db.session.rollback()
 
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            return False
+
+    def update(self, data):
+        if not data:
+            return None
+
+        try:
+            self.dni = data['teacher_dni']
+            self.name = data['teacher_name']
+            self.surnames = data['teacher_surnames']
+            self.area_cod = data['area_cod']
+            self.potential = data['teacher_potential']
+            self.tutorial_hours = data['tutorial_hours']
+
+        except Exception as e:
+            return None
+
     @staticmethod
     def all():
         return Teacher.query.all()
@@ -499,6 +524,18 @@ class User(db.Model):
         except IntegrityError:
             db.session.rollback()
             return None
+
+    def update(self, data):
+        if not data:
+            return None
+        try:
+            self.password = generate_password_hash(data['password'], method='sha256') if data['password'] else self.password
+            self.isAdmin = data['isAdmin']
+            self.teacher_dni = data['teacher_dni'] if data['teacher_dni'] else None
+            return self
+        except Exception as e:
+            return None
+
 
     @staticmethod
     def all():

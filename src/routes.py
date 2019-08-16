@@ -95,7 +95,7 @@ def get_teacher_load(user, dni=None):
 
 @app.route('/teacher_load', methods=['POST'])
 @token_required
-def post_list_teacher_load(user):
+def create_teachers_loads(user):
     data = request.get_json()
     if not data:
         return make_response(jsonify({'message': 'Data not found'}), 401)
@@ -130,6 +130,22 @@ def delete_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None):
     return make_response(jsonify({'message': 'Teacher load delete error'}), 404)
 
 
+@app.route('/teacher_load/<area_cod>/<subject_cod>/<group_cod>', methods=['PUT'])
+@token_required
+def update_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None):
+
+    data = request.get_json()
+    if not area_cod and not subject_cod and not group_cod and data:
+        return make_response(jsonify({'message': 'Param not found'}), 404)
+
+    group, teacher = Group.get(area_cod, subject_cod, group_cod), user.teacher
+    impart = Impart.get(group, teacher)
+    if impart:
+        impart.hours = data['hours']
+        if impart.save():
+            return make_response(jsonify({'message': 'Teacher load update successfully'}), 201)
+
+    return make_response(jsonify({'message': 'Teacher load update error'}), 404)
 
 
 
@@ -182,9 +198,11 @@ def get_one_group(current_user, area_cod=None, subject_cod=None, group_cod=None)
 '''
 
 
-@app.route('/subject', methods=['GET'])
+@app.route('/subjects', methods=['GET'])
 @token_required
 def get_subjects(current_user):
+
+    # TODO - Utilizar Resource build dict
     output = []
     for subject in Subject.all():
         titulacion = subject.university_degree
@@ -242,7 +260,7 @@ def get_responsible(user):
 
 @app.route('/subject/coordinator', methods=['POST'])
 @token_required
-def add_coordinator(user):
+def create_coordinator(user):
 
     data = request.get_json()
     if data and user.teacher:
@@ -287,9 +305,10 @@ def add_coordinator(user):
     return make_response(jsonify({'message': 'Have had any errors'}), 404)
 
 
+'''
 @app.route('/subject/responsible', methods=['POST'])
 @token_required
-def add_responsible(user):
+def create_responsible(user):
 
     data = request.get_json()
     if data and user.teacher:
@@ -312,6 +331,7 @@ def add_responsible(user):
         return make_response(jsonify(data_infor), 201)
 
     return make_response(jsonify({'message': 'Have had any errors'}), 404)
+'''
 
 
 @app.route('/teacher/coordinator/<dni>', methods=['GET'])
@@ -406,6 +426,77 @@ def login():
     return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
+@app.route('/currentUser', methods=['GET'])
+@token_required
+def get_currentuser(user):
+    return make_response(jsonify(user.to_dict()), 201)
+
+
+@app.route('/currentUser', methods=['PUT'])
+@token_required
+def update_currentuser(current_user):
+    data = request.get_json()
+    if data:
+        current_user.password = generate_password_hash(data['password'], method='sha256')
+        if current_user.save():
+            return make_response(jsonify({'message': 'password success saved'}), 201)
+        else:
+            return make_response(jsonify({'message': 'data could not update'}), 401)
+    else:
+        return make_response(jsonify({'message': 'no data found'}), 401)
+
+
+@app.route('/user/<username>', methods=['GET'])
+@token_required
+def get_user(user, username=None):
+    u = User.get(username=username)
+    if u:
+        if u.teacher:
+            return make_response(jsonify(Resource.build_dict(user=u, teacher=u.teacher)), 201)
+        else:
+            return make_response(jsonify(Resource.build_dict(user=u)), 201)
+
+    return make_response(jsonify({'message': 'User not found'}), 201)
+
+
+@app.route('/user/<username>', methods=['DELETE'])
+@token_required
+def remove_user(user, username=None):
+
+    u = User.get(username=username)
+    if not u:
+        return make_response(jsonify({'message': 'User not found'}), 404)
+    if u.username in 'test':
+        return make_response(jsonify({'message': 'User not could delete'}), 401)
+
+    if u.delete():
+        return make_response(jsonify({'message': 'User successfully removed'}), 201)
+
+    return make_response(jsonify({'message': 'User not could delete'}), 401)
+
+
+@app.route('/user/<username>', methods=['PUT'])
+@token_required
+def update_user(user, username=None):
+    u = User.get(username=username)
+    if not u or not request.get_json():
+        return make_response(jsonify({'message': 'User not found'}), 404)
+
+    u.update(request.get_json())
+    if u.save():
+        return make_response(jsonify({'message': 'User successfully update'}), 201)
+
+    return make_response(jsonify({'message': 'User not could update'}), 404)
+
+
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = User.all()
+    if users:
+        return make_response(jsonify([Resource.build_dict(user=user, teacher=user.teacher) for user in users]), 201)
+    return make_response(jsonify({'message': 'Users not found'}), 404)
+
+
 @app.route('/sign-in', methods=['POST'])
 def create_user():
     data = request.get_json()
@@ -449,27 +540,50 @@ def create_user():
 '''
 
 
-@app.route('/user', methods=['GET'])
-@token_required
-def get_teacher(user):
-    try:
-        return make_response(jsonify(user.to_dict()), 201)
-    except:
-        return make_response(jsonify({}), 500)
+@app.route('/teachers', methods=['GET'])
+def get_teachers():
+    teachers = Teacher.all()
+    if teachers:
+        return make_response(jsonify([teacher.to_dict() for teacher in teachers]), 201)
+    return make_response(jsonify({'message': 'Teachers not found'}), 404)
 
 
-@app.route('/teacher', methods=['PUT'])
+@app.route('/teacher/<dni>', methods=['GET'])
 @token_required
-def update_teacher(current_user):
-    data = request.get_json()
-    if data:
-        current_user.password = generate_password_hash(data['password'], method='sha256')
-        if current_user.save():
-            return make_response(jsonify({'message': 'password success saved'}), 201)
-        else:
-            return make_response(jsonify({'message': 'data could not update'}), 401)
-    else:
-        return make_response(jsonify({'message': 'no data found'}), 401)
+def get_teacher(user, dni=None):
+    teacher = Teacher.get(dni)
+    if not teacher:
+        return make_response(jsonify({'message': 'Teacher not found'}), 404)
+    return make_response(jsonify(teacher.to_dict()), 201)
+
+
+@app.route('/teacher/<dni>', methods=['PUT'])
+@token_required
+def update_teacher(user, dni=None):
+    teacher = Teacher.get(dni)
+
+    if not teacher or not request.get_json():
+        return make_response(jsonify({'message': 'User not found'}), 404)
+
+    teacher.update(request.get_json())
+    if teacher.save():
+        return make_response(jsonify({'message': 'User successfully update'}), 201)
+
+    return make_response(jsonify({'message': 'User not could update'}), 404)
+
+
+@app.route('/teacher/<dni>', methods=['DELETE'])
+@token_required
+def remove_teacher(user, dni=None):
+
+    teacher = Teacher.get(dni)
+    if not teacher:
+        return make_response(jsonify({'message': 'Teacher not found'}), 404)
+
+    if teacher.delete():
+        return make_response(jsonify({'message': 'Teacher successfully removed'}), 201)
+
+    return make_response(jsonify({'message': 'Teacher not could delete'}), 401)
 
 
 @app.route('/teacher/tutorial', methods=['GET'])
