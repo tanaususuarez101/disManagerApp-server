@@ -234,34 +234,41 @@ class Resource:
             return value
 
     @staticmethod
-    def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None,
-                   tutorial=None, impart=None, veniaI=None, veniaII=None):
-
-        output_dict = {}
-        output_dict.update(teacher.to_dict()) if teacher else output_dict
-        output_dict.update(subject.to_dict()) if subject else output_dict
-        output_dict.update(group.to_dict()) if group else output_dict
-        output_dict.update(area.to_dict()) if area else output_dict
-        output_dict.update(university.to_dict()) if university else output_dict
-        output_dict.update(pda.to_dict()) if pda else output_dict
-        output_dict.update(user.to_dict()) if user else output_dict
-        output_dict.update(tutorial.to_dict()) if tutorial else output_dict
-        output_dict.update(impart.to_dict()) if impart else output_dict
-        output_dict.update(veniaI.to_dict()) if veniaI else output_dict
-        output_dict.update(veniaII.to_dict()) if veniaII else output_dict
-        return output_dict
-
-    @staticmethod
-    def teacher_cover_hours(group=None):
-        if group:
-            cover_hour = 0
-            for impart in group.teacher:
-                cover_hour += float(impart.hours)
-            return {"group_cover_hours": cover_hour - float(group.hours)}
-
-    @staticmethod
     def join_file(filename):
         return os.path.join(UPLOADS_DIR, filename)
+
+def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None,
+               tutorial=None, impart=None, veniaI=None, veniaII=None):
+
+    output_dict = {}
+    output_dict.update(teacher.to_dict()) if teacher else output_dict
+    output_dict.update(subject.to_dict()) if subject else output_dict
+    output_dict.update(group.to_dict()) if group else output_dict
+    output_dict.update(area.to_dict()) if area else output_dict
+    output_dict.update(university.to_dict()) if university else output_dict
+    output_dict.update(pda.to_dict()) if pda else output_dict
+    output_dict.update(user.to_dict()) if user else output_dict
+    output_dict.update(tutorial.to_dict()) if tutorial else output_dict
+    output_dict.update(impart.to_dict()) if impart else output_dict
+    output_dict.update(veniaI.to_dict()) if veniaI else output_dict
+    output_dict.update(veniaII.to_dict()) if veniaII else output_dict
+    return output_dict
+
+def group_cover_hours(group=None):
+    cover_hours = 0.
+    if group:
+        for impart in group:
+            group = Group.get(impart.area_cod, impart.subject_cod, impart.group_cod)
+            cover_hours += float(group.hours)
+    return cover_hours
+
+
+def teacher_cover_hours(group=None):
+    if group:
+        cover_hour = 0
+        for impart in group.teacher:
+            cover_hour += float(impart.hours)
+        return {"group_cover_hours": cover_hour - float(group.hours)}
 
 
 def contains_keys(list_keys=[], data_keys=None):

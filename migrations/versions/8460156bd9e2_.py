@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: c9738054fe3f
+Revision ID: 8460156bd9e2
 Revises: 
-Create Date: 2019-08-01 20:46:45.745916
+Create Date: 2019-08-31 20:23:41.219178
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c9738054fe3f'
+revision = '8460156bd9e2'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -88,6 +88,8 @@ def upgrade():
     op.create_table('veniaI',
     sa.Column('area_cod', sa.String(length=64), nullable=False),
     sa.Column('teacher_dni', sa.String(length=64), nullable=False),
+    sa.Column('approved', sa.Boolean(), nullable=True),
+    sa.Column('rejected', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['area_cod'], ['knowledgeArea.area_cod'], ),
     sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
     sa.PrimaryKeyConstraint('area_cod', 'teacher_dni')
@@ -114,6 +116,8 @@ def upgrade():
     sa.Column('subject_cod', sa.String(length=64), nullable=False),
     sa.Column('area_cod', sa.String(length=64), nullable=False),
     sa.Column('teacher_dni', sa.String(length=64), nullable=False),
+    sa.Column('approved', sa.Boolean(), nullable=True),
+    sa.Column('rejected', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['subject_cod', 'area_cod'], ['subject.subject_cod', 'subject.area_cod'], ),
     sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
     sa.PrimaryKeyConstraint('subject_cod', 'area_cod', 'teacher_dni')
@@ -124,7 +128,8 @@ def upgrade():
     sa.Column('area_cod', sa.String(length=64), nullable=False),
     sa.Column('teacher_dni', sa.String(length=64), nullable=False),
     sa.Column('hours', sa.String(length=64), nullable=True),
-    sa.Column('state_solicitation', sa.String(length=64), nullable=True),
+    sa.Column('approved', sa.Boolean(), nullable=True),
+    sa.Column('rejected', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['group_cod', 'subject_cod', 'area_cod'], ['group.group_cod', 'group.subject_cod', 'group.area_cod'], ),
     sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
     sa.PrimaryKeyConstraint('group_cod', 'subject_cod', 'area_cod', 'teacher_dni')

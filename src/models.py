@@ -21,16 +21,22 @@ class Impart(db.Model):
     teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
 
     hours = db.Column(db.String(64))
-    state_solicitation = db.Column(db.String(64))
+    approved = db.Column(db.Boolean)
+    rejected = db.Column(db.Boolean)
 
     teacher = db.relationship('Teacher', back_populates='group')
     group = db.relationship('Group', back_populates='teacher')
 
-    def __init__(self, group=None, teacher=None, hours=None, state_solicitation='pendiente'):
+    def __init__(self, group=None, teacher=None, hours=None, status=None):
         self.group = group
         self.teacher = teacher
         self.hours = hours
-        self.state_solicitation = state_solicitation
+        if status and 'approved' in status:
+            self.approved = status.approved
+            self.rejected = False
+        elif status and 'rejected' in status:
+            self.approved = False
+            self.rejected = status.rejected
 
     def __repr__(self):
         return '<group: {}, Teacher: {}>'.format(self.group, self.teacher_dni)
@@ -52,14 +58,31 @@ class Impart(db.Model):
         except IntegrityError:
             db.session.rollback()
             return False
+
+    def update(self, data):
+
+        if data and 'hours' in data:
+            self.hours = data['hours']
+
+        if data and 'approved' in data:
+            self.approved = data['approved']
+            self.rejected = False
+        elif data and 'rejected' in data:
+            self.approved = False
+            self.rejected = data['rejected']
+
     @staticmethod
-    def get(group=None, teacher=None):
-        if group and teacher:
-            return Impart.query.get([group.group_cod, group.subject_cod, group.area_cod, teacher.dni])
+    def all():
+        return Impart.query.all()
+
+    @staticmethod
+    def get(group_cod=None, subject_cod=None, area_cod=None, teacher_dni=None):
+        if group_cod and subject_cod and area_cod and teacher_dni:
+            return Impart.query.get([group_cod, subject_cod, area_cod, teacher_dni])
 
     def to_dict(self):
         return {'group_cod': self.group_cod, 'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni':
-                self.teacher_dni, 'assigned_hours': self.hours, 'state_solicitation': self.state_solicitation}
+                self.teacher_dni, 'assigned_hours': self.hours, 'approved': self.approved, 'rejected': self.rejected}
 
 
 class VeniaI(db.Model):
@@ -67,13 +90,21 @@ class VeniaI(db.Model):
 
     area_cod = db.Column(db.String(64), db.ForeignKey('knowledgeArea.area_cod'), primary_key=True)
     teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
+    approved = db.Column(db.Boolean)
+    rejected = db.Column(db.Boolean)
 
     knowledgeArea = db.relationship('KnowledgeArea', back_populates='veniaI')
     teacher = db.relationship('Teacher', back_populates='veniaI')
 
-    def __init__(self, area, teacher):
+    def __init__(self, area=None, teacher=None, status=None):
         self.knowledgeArea = area
         self.teacher = teacher
+        if status and 'approved' in status:
+            self.approved = status.approved
+            self.rejected = False
+        elif status and 'rejected' in status:
+            self.approved = False
+            self.rejected = status.rejected
 
     def save(self):
         try:
@@ -93,25 +124,50 @@ class VeniaI(db.Model):
             db.session.rollback()
             return False
 
+    def update(self, status=None):
+        if status and 'approved' in status:
+            self.approved = status['approved']
+            self.rejected = False
+        elif status and'rejected' in status:
+            self.approved = False
+            self.rejected = status['rejected']
+
+    @staticmethod
+    def get(area_cod=None, teacher_dni=None):
+        return VeniaI.query.get([area_cod, teacher_dni])
+
+    @staticmethod
+    def all():
+        return VeniaI.query.all()
+
     def to_dict(self):
-        return {'area_cod': self.area_cod, 'teacher_dni': self.teacher_dni}
+        return {'area_cod': self.area_cod, 'teacher_dni': self.teacher_dni, 'approved': self.approved,
+                'rejected': self.rejected}
 
 
 class VeniaII(db.Model):
     __tablename__ = "veniaII"
 
-    subject_cod = db.Column(db.String(64), primary_key=True)
     area_cod = db.Column(db.String(64), primary_key=True)
+    subject_cod = db.Column(db.String(64), primary_key=True)
     teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
+    approved = db.Column(db.Boolean)
+    rejected = db.Column(db.Boolean)
 
     __table_args__ = (db.ForeignKeyConstraint([subject_cod, area_cod], ['subject.subject_cod', 'subject.area_cod']), {})
 
-    subject = db.relationship('Subject', back_populates='veniaII')
+    subject = db.relationship('Subject', back_populates='veniaII', )
     teacher = db.relationship('Teacher', back_populates='veniaII')
 
-    def __init__(self, subject, teacher):
+    def __init__(self, subject=None, teacher=None, status=None):
         self.subject = subject
         self.teacher = teacher
+        if status and 'approved' in status:
+            self.approved = status['approved']
+            self.rejected = False
+        elif status and 'rejected' in status:
+            self.approved = False
+            self.rejected = status['rejected']
 
     def save(self):
         try:
@@ -131,8 +187,26 @@ class VeniaII(db.Model):
             db.session.rollback()
             return False
 
+    def update(self, status=None):
+        if status and 'approved' in status:
+            self.approved = status['approved']
+            self.rejected = False
+        elif status and 'rejected' in status:
+            self.approved = False
+            self.rejected = status['rejected']
+
+    @staticmethod
+    def get(area_cod=None, subject_cod=None, teacher_dni=None):
+        return VeniaII.query.get([area_cod, subject_cod, teacher_dni])
+
+    @staticmethod
+    def all():
+        return VeniaII.query.all()
+
     def to_dict(self):
-        return {'subject_cod': self.subject_cod, 'teacher_dni': self.teacher_dni}
+        return {'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni': self.teacher_dni, 'approved':
+            self.approved}
+
 
 
 '''
@@ -159,8 +233,8 @@ class Subject(db.Model):
     university_degree = db.relationship('UniversityDegree', back_populates="subject")
     coordinator = db.relationship('Teacher', foreign_keys=[coordinator_dni])
     responsible = db.relationship('Teacher', foreign_keys=[responsible_dni])
-    group = db.relationship('Group', back_populates="subject", cascade="all,delete")
-    PDA = db.relationship('PDA', back_populates="subject", uselist=False, cascade="all, delete-orphan")
+    group = db.relationship('Group', back_populates="subject", cascade="all,delete,delete-orphan")
+    PDA = db.relationship('PDA', back_populates="subject", uselist=False, cascade="all,delete,delete-orphan")
     veniaII = db.relationship('VeniaII', back_populates='subject')
 
     def __init__(self, subject_cod=None, area_cod=None, university_cod=None, name=None, type=None, semestre=None,
@@ -264,12 +338,12 @@ class Teacher(db.Model):
     potential = db.Column(db.String(64), nullable=True)
     tutorial_hours = db.Column(db.String(64), nullable=True)
 
-    group = db.relationship('Impart', back_populates='teacher')
+    group = db.relationship('Impart', back_populates='teacher', cascade="all,delete,delete-orphan")
     knowledgeArea = db.relationship('KnowledgeArea', back_populates='teacher', uselist=False)
     veniaI = db.relationship('VeniaI', back_populates='teacher')
     veniaII = db.relationship('VeniaII', back_populates='teacher')
     user = db.relationship('User', back_populates='teacher')
-    tutorial = db.relationship('Tutorial', back_populates='teacher', uselist=False)
+    tutorial = db.relationship('Tutorial', back_populates='teacher', uselist=False, cascade="all,delete,delete-orphan")
 
     def __init__(self, dni=None, name=None, surnames=None, potential=None, tutorial_hours=None, area=None):
         self.dni = dni
@@ -323,7 +397,7 @@ class Teacher(db.Model):
         return Teacher.query.get(teacher_dni)
 
     def to_dict(self):
-        return {'teacher_dni': self.dni, 'teacher_name': self.name, 'area_cod': self.area_cod,
+        return {'teacher_dni': self.dni, 'teacher_name': self.name, 'teacher_area_cod': self.area_cod,
                 'teacher_surnames': self.surnames, 'teacher_potential': self.potential, 'tutorial_hours':
                     self.tutorial_hours}
 
@@ -334,8 +408,8 @@ class KnowledgeArea(db.Model):
     area_cod = db.Column(db.String(64), primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
 
-    teacher = db.relationship('Teacher', back_populates='knowledgeArea', cascade="all,delete")
-    subject = db.relationship('Subject', back_populates="knowledgeArea", cascade='all,delete')
+    teacher = db.relationship('Teacher', back_populates='knowledgeArea', cascade="all,delete,delete-orphan")
+    subject = db.relationship('Subject', back_populates="knowledgeArea", cascade="all,delete,delete-orphan")
 
     veniaI = db.relationship('VeniaI', back_populates='knowledgeArea')
 
@@ -383,7 +457,7 @@ class UniversityDegree(db.Model):
     plan_cod = db.Column(db.String(64))
     special_cod = db.Column(db.String(64))
 
-    subject = db.relationship('Subject', backref='UniversityDegree', cascade="all, delete-orphan", lazy='dynamic')
+    subject = db.relationship('Subject', backref='UniversityDegree', cascade="all,delete,delete-orphan", lazy='dynamic')
 
     def __init__(self, university_degree_cod=None, name=None, plan_code=None, specialty_cod=None, acronym=None,
                  study_center=None):
@@ -526,16 +600,13 @@ class User(db.Model):
             return None
 
     def update(self, data):
-        if not data:
-            return None
-        try:
-            self.password = generate_password_hash(data['password'], method='sha256') if data['password'] else self.password
+        if 'password' in data and data['password']:
+            self.password = generate_password_hash(data['password'], method='sha256')
+        if 'isAdmin' in data:
             self.isAdmin = data['isAdmin']
-            self.teacher_dni = data['teacher_dni'] if data['teacher_dni'] else None
-            return self
-        except Exception as e:
-            return None
-
+        if 'teacher_dni' in data:
+            self.teacher = Teacher.get(data['teacher_dni'])
+        return self
 
     @staticmethod
     def all():
