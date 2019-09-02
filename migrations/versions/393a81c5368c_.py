@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 8460156bd9e2
+Revision ID: 393a81c5368c
 Revises: 
-Create Date: 2019-08-31 20:23:41.219178
+Create Date: 2019-09-02 13:19:01.232102
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8460156bd9e2'
+revision = '393a81c5368c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -113,14 +113,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('group_cod', 'subject_cod', 'area_cod')
     )
     op.create_table('veniaII',
-    sa.Column('subject_cod', sa.String(length=64), nullable=False),
     sa.Column('area_cod', sa.String(length=64), nullable=False),
+    sa.Column('subject_cod', sa.String(length=64), nullable=False),
     sa.Column('teacher_dni', sa.String(length=64), nullable=False),
     sa.Column('approved', sa.Boolean(), nullable=True),
     sa.Column('rejected', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['subject_cod', 'area_cod'], ['subject.subject_cod', 'subject.area_cod'], ),
     sa.ForeignKeyConstraint(['teacher_dni'], ['teacher.dni'], ),
-    sa.PrimaryKeyConstraint('subject_cod', 'area_cod', 'teacher_dni')
+    sa.PrimaryKeyConstraint('area_cod', 'subject_cod', 'teacher_dni')
     )
     op.create_table('impart',
     sa.Column('group_cod', sa.String(length=64), nullable=False),

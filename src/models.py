@@ -2,6 +2,7 @@ from src import db, app
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 import json
+
 '''
     Entities Relationships 
 '''
@@ -37,9 +38,6 @@ class Impart(db.Model):
         elif status and 'rejected' in status:
             self.approved = False
             self.rejected = status.rejected
-
-    def __repr__(self):
-        return '<group: {}, Teacher: {}>'.format(self.group, self.teacher_dni)
 
     def save(self):
         try:
@@ -82,7 +80,7 @@ class Impart(db.Model):
 
     def to_dict(self):
         return {'group_cod': self.group_cod, 'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni':
-                self.teacher_dni, 'assigned_hours': self.hours, 'approved': self.approved, 'rejected': self.rejected}
+            self.teacher_dni, 'assigned_hours': self.hours, 'approved': self.approved, 'rejected': self.rejected}
 
 
 class VeniaI(db.Model):
@@ -128,7 +126,7 @@ class VeniaI(db.Model):
         if status and 'approved' in status:
             self.approved = status['approved']
             self.rejected = False
-        elif status and'rejected' in status:
+        elif status and 'rejected' in status:
             self.approved = False
             self.rejected = status['rejected']
 
@@ -205,8 +203,7 @@ class VeniaII(db.Model):
 
     def to_dict(self):
         return {'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni': self.teacher_dni, 'approved':
-            self.approved}
-
+            self.approved, 'rejected': self.rejected}
 
 
 '''
@@ -230,12 +227,13 @@ class Subject(db.Model):
     type = db.Column(db.String(64), nullable=False)
 
     knowledgeArea = db.relationship('KnowledgeArea', back_populates='subject')
-    university_degree = db.relationship('UniversityDegree', back_populates="subject")
+    university_degree = db.relationship('UniversityDegree', back_populates="subject",
+                                        cascade="all,delete,delete-orphan", single_parent=True)
     coordinator = db.relationship('Teacher', foreign_keys=[coordinator_dni])
     responsible = db.relationship('Teacher', foreign_keys=[responsible_dni])
     group = db.relationship('Group', back_populates="subject", cascade="all,delete,delete-orphan")
     PDA = db.relationship('PDA', back_populates="subject", uselist=False, cascade="all,delete,delete-orphan")
-    veniaII = db.relationship('VeniaII', back_populates='subject')
+    veniaII = db.relationship('VeniaII', back_populates='subject', cascade="all,delete,delete-orphan")
 
     def __init__(self, subject_cod=None, area_cod=None, university_cod=None, name=None, type=None, semestre=None,
                  course=None, academic_year=None):
@@ -257,9 +255,6 @@ class Subject(db.Model):
             db.session.rollback()
             return None
 
-    def __repr__(self):
-        return '<Asignatura: cod: {}, name: {}>'.format(self.subject_cod, self.name)
-
     @staticmethod
     def all():
         return Subject.query.all()
@@ -270,9 +265,10 @@ class Subject(db.Model):
 
     def to_dict(self):
         return {'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'university_cod': self.university_cod,
-                'coordinator_dni': self.coordinator_dni, 'responsible_dni': self.responsible_dni, 'subject_academic_year':
-                self.academic_year, 'subject_name': self.name, 'subject_course': self.course, 'subject_semester':
-                self.semester, 'subject_type': self.type}
+                'coordinator_dni': self.coordinator_dni, 'responsible_dni': self.responsible_dni,
+                'subject_academic_year':
+                    self.academic_year, 'subject_name': self.name, 'subject_course': self.course, 'subject_semester':
+                    self.semester, 'subject_type': self.type}
 
 
 class Group(db.Model):
@@ -340,9 +336,9 @@ class Teacher(db.Model):
 
     group = db.relationship('Impart', back_populates='teacher', cascade="all,delete,delete-orphan")
     knowledgeArea = db.relationship('KnowledgeArea', back_populates='teacher', uselist=False)
-    veniaI = db.relationship('VeniaI', back_populates='teacher')
-    veniaII = db.relationship('VeniaII', back_populates='teacher')
-    user = db.relationship('User', back_populates='teacher')
+    veniaI = db.relationship('VeniaI', back_populates='teacher', cascade="all,delete,delete-orphan")
+    veniaII = db.relationship('VeniaII', back_populates='teacher', cascade="all,delete,delete-orphan")
+    user = db.relationship('User', back_populates='teacher', cascade="all,delete,delete-orphan")
     tutorial = db.relationship('Tutorial', back_populates='teacher', uselist=False, cascade="all,delete,delete-orphan")
 
     def __init__(self, dni=None, name=None, surnames=None, potential=None, tutorial_hours=None, area=None):
@@ -352,9 +348,6 @@ class Teacher(db.Model):
         self.potential = potential
         self.tutorial_hours = tutorial_hours
         self.knowledgeArea = area
-
-    def __repr__(self):
-        return '<Profesor: dni: {}, nombre: {}>'.format(self.dni, self.name)
 
     def save(self):
         try:
@@ -366,27 +359,35 @@ class Teacher(db.Model):
 
     def delete(self):
         try:
+            print(self.dni)
+            for subject in Subject.query.filter_by(coordinator_dni=self.dni).all():
+                subject.coordinator = None
+                subject.save()
+            for subject in Subject.query.filter_by(responsible_dni=self.dni).all():
+                subject.responsible = None
+                subject.save()
+
             db.session.delete(self)
             db.session.commit()
-            return True
+            return self
         except IntegrityError:
             db.session.rollback()
-            return False
-
-    def update(self, data):
-        if not data:
             return None
 
-        try:
+    def update(self, data=None):
+
+        if data and 'teacher_dni' in data:
             self.dni = data['teacher_dni']
+        if data and 'teacher_name' in data:
             self.name = data['teacher_name']
+        if data and 'teacher_surnames' in data:
             self.surnames = data['teacher_surnames']
+        if data and 'area_cod' in data:
             self.area_cod = data['area_cod']
+        if data and 'teacher_potential' in data:
             self.potential = data['teacher_potential']
+        if data and 'tutorial_hours' in data:
             self.tutorial_hours = data['tutorial_hours']
-
-        except Exception as e:
-            return None
 
     @staticmethod
     def all():
@@ -524,10 +525,6 @@ class PDA(db.Model):
         self.status = status if not status else status.lower()
         self.observations = observations if not observations else status.lower()
 
-    def __repr__(self):
-        return '<PDA id: {}, subject_cod: {}, status: {}, observations: {} >'.format(self.id, self.subject_cod,
-                                                                                     self.status, self.observations)
-
     def save(self):
         try:
             db.session.add(self)
@@ -555,11 +552,8 @@ class PDA(db.Model):
         return PDA.query.get(area_cod)
 
     def to_dict(self):
-        return {
-            'subject_cod': self.subject_cod,
-            'subject_name': self.subject.name,
-            'pda_status': self.status,
-            'pda_observations': self.observations}
+        return {'id': self.id, 'subject_cod': self.subject_cod, 'area_cod': self.area_cod,
+                'subject_name': self.subject.name, 'pda_status': self.status, 'pda_observations': self.observations}
 
 
 class User(db.Model):
@@ -664,6 +658,10 @@ class Tutorial(db.Model):
     def get(dni=None):
         if dni:
             return Tutorial.query.filter_by(teacher_dni=dni).first()
+
+    @staticmethod
+    def all():
+        return Tutorial.query.all()
 
     def to_dict(self):
         return {'first_semester': json.loads(self.first_semester), 'second_semester': json.loads(self.second_semester),

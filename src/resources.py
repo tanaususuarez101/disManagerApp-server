@@ -58,142 +58,6 @@ class Resource:
         return data
 
     @staticmethod
-    def backup_database():
-        wb = Workbook()
-        download_file = os.path.join(UPLOADS_DIR, 'backup.xlsx')# TODO- add date to exit file
-        sheet = wb.active
-
-        university_degrees = UniversityDegree.get_all()
-        sheet.append(ALLOWED_COLUMNS)
-
-        for us in university_degrees:
-            us_row = [201920, us.university_degree_cod, us.plan_cod, us.special_cod, us.acronym, us.name,
-                      us.study_center]
-            subjects = us.subjects
-            for sub in subjects:
-                sub_row = [sub.subject_cod, sub.name, sub.course, sub.semester, sub.type]
-                all_assign = Assigned.get_subject_relationship(sub)
-                areas = sub.knowledge_areas
-                for assigned in all_assign:
-                    group = Groups.get(assigned.group_cod)
-                    group_row = [group.group_cod, group.type, '', assigned.number_hours]
-                    for area in areas:
-                        area_row = [area.area_cod, area.name]
-                        sheet.append(us_row + sub_row + group_row + area_row)
-                        area_row.clear()
-                    group_row.clear()
-                sub_row.clear()
-            us_row.clear()
-        wb.save(download_file)
-        return download_file
-
-    @staticmethod
-    def export_database():
-        wb = Workbook()
-        download_file = os.path.join(UPLOADS_DIR, 'database.xlsx')# TODO- add date to exit file
-        sheet = wb.active
-
-        groups = Group.get_all()
-        sheet.append(['Curso Acad.', 'Codigo Titulacion', 'Codigo Plan', 'Codigo Espec.', 'Codigo Asignatura.',
-                      'Codigo Grupo', 'DNI (sin letra)', 'Num Horas', 'Codigo area.', 'Venia'])
-
-        for group in groups:
-            subject = Subject.get(group.subject_cod)
-            area = KnowledgeArea.get(group.area_cod)
-            titulation = UniversityDegree.get(subject.university_degree_cod)
-            sheet.append(['201920', titulation.university_degre_cod, titulation.plan_cod, titulation.special_cod,
-                         subject.subject_cod, group.group_cod, '', group.group_hours, area.area_cod, 'N'])
-            wb.save(download_file)
-
-        return download_file
-
-    @staticmethod
-    def import_database(data=None):
-
-        if data or allowed_field(data):
-            message_output = {'asignaturas': [], 'titulacion': [], 'area_conocimiento': [], 'grupos': []}
-
-            # TODO - Eliminar espacios y mayúsculas de las claves de 'data'
-            for i in range(0, len(data['Curso_Academico'])):
-                if data['Curso_Academico'][i] is not '':
-
-                    '''
-                    TÍTULOS UNIVERSITARIOS
-                    '''
-
-                    university_degree = UniversityDegree.get(data['Cod Titulacion'][i])
-                    if not university_degree:
-                        university_degree = UniversityDegree(
-                                                data['Cod Titulacion'][i],
-                                                data['Nombre Titulacion'][i],
-                                                data['Cod Plan'][i],
-                                                data['Cod Especialidad'][i],
-                                                data['Acronimo Titulacion'][i],
-                                                data['Centro Imparticion'][i])
-                        if university_degree.save():
-                            message_output['titulacion'].append(
-                                {'SUCCESS': 'Se ha añadido {}: {}'.format(university_degree.university_cod,
-                                                                          university_degree.name)})
-                        else:
-                            message_output['titulacion'].append(
-                                {'ERROR': 'No se ha guardado {}: {}'.format(university_degree.university_cod,
-                                                                            university_degree.name)})
-
-                    '''
-                    ÁREAS DE CONOCIMIENTOS
-                    '''
-
-                    area = KnowledgeArea.get(data['Cod Area'][i])
-                    if not area:
-                        area = KnowledgeArea(data['Cod Area'][i], data['Nombre Area'][i])
-                        if area.save():
-                            message_output['area_conocimiento'].append(
-                                {'SUCCESS': 'Se ha añadido {}: {}'.format(area.area_cod, area.name)})
-                        else:
-                            message_output['area_conocimiento'].append(
-                                {'ERROR': 'No se ha gaurdado {}: {}'.format(area.area_cod, area.name)})
-
-                    '''
-                    ASIGNATURAS
-                    '''
-
-                    subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
-                    if not subject:
-                        subject = Subject(data['Cod Asignatura'][i],
-                                          data['Cod Area'][i],
-                                          data['Cod Titulacion'][i],
-                                          data['Nombre Asignatura'][i],
-                                          data['Tipo Asignatura'][i],
-                                          data['Cuatrimestre Asignatura'][i],
-                                          data['Curso Asignatura'][i],
-                                          data['Curso_Academico'][i])
-                        if subject.save():
-                            message_output['asignaturas'].append(
-                                {'SUCCESS': 'Se ha añadido {}: {}'.format(subject.subject_cod, subject.name)})
-                        else:
-                            message_output['asignaturas'].append(
-                                {'ERROR': 'No se ha añadido {}: {}'.format(subject.subject_cod, subject.name)})
-
-                    '''
-                    GRUPOS
-                    '''
-
-                    group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Cod Area'][i])
-                    if not group:
-                        group = Group(subject, data['Cod Grupo'][i], data['Tipo Grupo'][i], data['Horas'][i])
-                        if group.save():
-                            message_output['grupos'].append(
-                                {'SUCCESS': 'Se ha añadido grupo {}: {}, de la asignatura {}'.format(group.group_cod,
-                                                                                                     group.type,
-                                                                                                     subject.name)})
-                        else:
-                            message_output['grupos'].append(
-                                {'ERROR': 'No se ha añadido grupo {}: {}, de la asignatura {}'.format(group.group_cod,
-                                                                                                     group.type,
-                                                                                                     subject.name)})
-        return message_output
-
-    @staticmethod
     def import_teacher(data=None):
         if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas tutorias', 'Cod Area'],
                                       data.keys()):
@@ -215,18 +79,6 @@ class Resource:
                                       area=area)
                     teacher.save()
 
-
-    @staticmethod
-    def import_pda(data=None):
-        if not data or (data and not contains_keys(['Cod Asignatura', 'Cod Area', 'Estado', 'Observaciones'], data.keys())):
-            return ''
-
-        for i in range(0, len(data['Cod Asignatura'])):
-            subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
-            if subject:
-                pda = PDA(subject, data['Estado'][i], data['Observaciones'][i])
-                pda.save()
-
     @staticmethod
     def file_statistics(data=None):
         if data:
@@ -237,8 +89,112 @@ class Resource:
     def join_file(filename):
         return os.path.join(UPLOADS_DIR, filename)
 
-def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None,
-               tutorial=None, impart=None, veniaI=None, veniaII=None):
+
+def export_database():
+    wb = Workbook()
+    download_file = os.path.join(UPLOADS_DIR, 'database.xlsx') # TODO- add date to exit file
+    sheet = wb.active
+
+    sheet.append(['Curso Acad.', 'Codigo Titulacion', 'Codigo Plan', 'Codigo Espec.', 'Codigo Asignatura.',
+                  'Codigo Grupo', 'DNI (sin letra)', 'Num Horas', 'Codigo area.', 'Venia'])
+
+    count = 0
+    for g in Group.all():
+        count += 1
+        print('Registro Nº: ', count)
+        row = ['201920', g.subject.university_cod, g.subject.university_degree.plan_cod,
+               g.subject.university_degree.special_cod, g.subject.subject_cod, g.group_cod, '', 'null',
+               g.subject.area_cod, 'null']
+        sheet.append(row)
+        wb.save(download_file)
+
+    return download_file
+
+
+def import_schema(data=None):
+
+        if data or allowed_field(data):
+            message = {'subject': 0, 'degreeUniversity': 0, 'knowledgeArea': 0, 'groups': 0, 'row_log': []}
+
+
+            # TODO - Eliminar espacios y mayúsculas de las claves de 'data'
+
+            for i in range(0, len(data['Curso_Academico'])):
+                row_saved = False
+                if data['Curso_Academico'][i] is not '':
+
+                    '''
+                    TÍTULOS UNIVERSITARIOS
+                    '''
+                    university = UniversityDegree.get(data['Cod Titulacion'][i])
+                    if not university:
+                        university = UniversityDegree(data['Cod Titulacion'][i], data['Nombre Titulacion'][i],
+                                                      data['Cod Plan'][i], data['Cod Especialidad'][i],
+                                                      data['Acronimo Titulacion'][i], data['Centro Imparticion'][i])
+
+                        if university.save():
+                            message['degreeUniversity'] += 1
+                            row_saved = True
+
+                    '''
+                    ÁREAS DE CONOCIMIENTOS
+                    '''
+                    area = KnowledgeArea.get(data['Cod Area'][i])
+                    if not area:
+                        area = KnowledgeArea(data['Cod Area'][i], data['Nombre Area'][i])
+                        if area.save():
+                            message['knowledgeArea'] += 1
+                            row_saved = True
+
+                    '''
+                    ASIGNATURAS
+                    '''
+
+                    subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
+                    if not subject:
+                        subject = Subject(data['Cod Asignatura'][i], data['Cod Area'][i], data['Cod Titulacion'][i],
+                                          data['Nombre Asignatura'][i], data['Tipo Asignatura'][i],
+                                          data['Cuatrimestre Asignatura'][i], data['Curso Asignatura'][i],
+                                          data['Curso_Academico'][i])
+                        if subject.save():
+                            message['subject'] += 1
+                            row_saved = True
+
+                    '''
+                    GRUPOS
+                    '''
+
+                    group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Cod Area'][i])
+                    if not group:
+                        group = Group(subject, data['Cod Grupo'][i], data['Tipo Grupo'][i], data['Horas'][i])
+                        if group.save():
+                            message['groups'] += 1
+                            row_saved = True
+
+                    if row_saved:
+                        message['row_log'].append(build_dict(university=university, area=area, subject=subject,
+                                                             group=group))
+
+        return message
+
+
+def import_pda(data=None):
+    if not data or (data and not contains_keys(['Cod Asignatura', 'Cod Area', 'Estado', 'Observaciones'], data.keys())):
+        return ''
+
+    PDAs = []
+    for i in range(0, len(data['Cod Asignatura'])):
+        subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
+        if subject:
+            pda = PDA(subject, data['Estado'][i], data['Observaciones'][i])
+            if pda.save():
+                PDAs.append(pda.to_dict())
+
+    return {'pda': PDAs, 'count': len(PDAs)}
+
+
+def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None, tutorial=None,
+               impart=None, veniaI=None, veniaII=None):
 
     output_dict = {}
     output_dict.update(teacher.to_dict()) if teacher else output_dict
@@ -253,6 +209,7 @@ def build_dict(subject=None, group=None, teacher=None, area=None, university=Non
     output_dict.update(veniaI.to_dict()) if veniaI else output_dict
     output_dict.update(veniaII.to_dict()) if veniaII else output_dict
     return output_dict
+
 
 def group_cover_hours(group=None):
     cover_hours = 0.
@@ -271,7 +228,9 @@ def teacher_cover_hours(group=None):
         return {"group_cover_hours": cover_hour - float(group.hours)}
 
 
-def contains_keys(list_keys=[], data_keys=None):
+def contains_keys(list_keys=None, data_keys=None):
+    if list_keys is None:
+        list_keys = []
     if len(list_keys) > 0 and data_keys:
         for key in list_keys:
             if key not in data_keys:

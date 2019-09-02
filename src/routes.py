@@ -102,13 +102,11 @@ def create_teachers_loads(user):
 @app.route('/teacher_load/<area_cod>/<subject_cod>/<group_cod>', methods=['DELETE'])
 @token_required
 def delete_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None):
-    if not area_cod and not subject_cod and not group_cod:
+    if not area_cod or not subject_cod or not group_cod:
         return make_response(jsonify({'message': 'Param not found'}), 404)
 
-    group, teacher = Group.get(area_cod, subject_cod, group_cod), user.teacher
-    impart = Impart.get(group, teacher)
-    if impart:
-        impart.delete()
+    impart = Impart.get(group_cod, subject_cod, area_cod, user.teacher.dni)
+    if impart.delete():
         return make_response(jsonify({'message': 'Teacher load deleted successfully'}), 201)
 
     return make_response(jsonify({'message': 'Teacher load delete error'}), 404)
@@ -136,27 +134,6 @@ def update_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None, t
 def get_teacher_request():
     return make_response(jsonify([build_dict(impart=impart, teacher=impart.teacher) for impart in Impart.all()]), 201)
 
-'''
-@app.route('/teacher_load/request/<area_cod>/<subject_cod>/<group_cod>', methods=['PUT'])
-def update_teacher_request():
-    data = request.get_json()
-    if not data:
-        return make_response(jsonify({'message': 'data not found'}), 404)
-
-    group = Group.get(data['area_cod'], data['subject_cod'], data['group_cod'])
-    teacher = Teacher.get(data['teacher_dni'])
-
-    if not group or not teacher:
-        return make_response(jsonify({'message': 'data not found'}), 404)
-
-    impart = Impart.get(group=group, teacher=teacher)
-    impart.update(data)
-
-    if impart.save():
-        return make_response(jsonify({'message': 'request updated'}), 201)
-
-    return make_response(jsonify({'message': 'request updated'}), 201)
-'''
 
 '''
     GROUP
@@ -473,32 +450,30 @@ def create_user():
 
 @app.route('/teachers', methods=['GET'])
 def get_teachers():
-    teachers = Teacher.all()
-    if teachers:
-        return make_response(jsonify([teacher.to_dict() for teacher in teachers]), 201)
-    return make_response(jsonify({'message': 'Teachers not found'}), 404)
+    return make_response(jsonify([teacher.to_dict() for teacher in Teacher.all()]), 201)
 
 
 @app.route('/teacher/<dni>', methods=['GET'])
 @token_required
 def get_teacher(user, dni=None):
-    teacher = Teacher.get(dni)
-    if not teacher:
-        return make_response(jsonify({'message': 'Teacher not found'}), 404)
-    return make_response(jsonify(teacher.to_dict()), 201)
+    if dni:
+        return make_response(jsonify(Teacher.get(dni).to_dict()), 201)
+
+    return make_response(jsonify({'message': 'Data not found'}), 404)
 
 
 @app.route('/teacher/<dni>', methods=['PUT'])
 @token_required
 def update_teacher(user, dni=None):
+
+    if not request.get_json() and not dni:
+        return make_response(jsonify({'message': 'Data not found'}), 404)
+
     teacher = Teacher.get(dni)
-
-    if not teacher or not request.get_json():
-        return make_response(jsonify({'message': 'User not found'}), 404)
-
-    teacher.update(request.get_json())
-    if teacher.save():
-        return make_response(jsonify({'message': 'User successfully update'}), 201)
+    if teacher:
+        teacher.update(request.get_json())
+        if teacher.save():
+            return make_response(jsonify({'message': 'User successfully update'}), 201)
 
     return make_response(jsonify({'message': 'User not could update'}), 404)
 
@@ -506,11 +481,11 @@ def update_teacher(user, dni=None):
 @app.route('/teacher/<dni>', methods=['DELETE'])
 @token_required
 def remove_teacher(user, dni=None):
-    teacher = Teacher.get(dni)
-    if not teacher:
+
+    if not dni:
         return make_response(jsonify({'message': 'Teacher not found'}), 404)
 
-    if teacher.delete():
+    if Teacher.get(dni).delete():
         return make_response(jsonify({'message': 'Teacher successfully removed'}), 201)
 
     return make_response(jsonify({'message': 'Teacher not could delete'}), 401)
@@ -558,8 +533,7 @@ def create_tutorial(current_user):
             teacher.tutorial.delete()
 
         teacher.tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
-                                    second_semester=json.dumps(data['second_semester']),
-                                    hours=data['hours'])
+                                    second_semester=json.dumps(data['second_semester']), hours=data['hours'])
         if teacher.save():
             return make_response(jsonify({'message': 'Tutorial has been saved'}), 201)
 
@@ -587,17 +561,17 @@ def get_teacher_responsible(user, dni=None):
 
 
 '''
-    API ADMINISTRATOR
+   DATA BASES
 '''
 
 
-@app.route('/upload_database', methods=['POST'])
+@app.route('/database', methods=['POST'])
 def upload_database():
     if request.method == 'POST':
         # check if the post request has the file part
         # try:
         if 'file' not in request.files:
-            return ''
+            return make_response(jsonify({'message': 'File not found'}), 404)
 
         request_file = request.files['file']
         if request_file and allowed_file(request_file.filename):
@@ -606,17 +580,41 @@ def upload_database():
             request_file.save(filename_dir)
 
             data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
-            entity_file = Resource.file_statistics(data_file)
-            data_saved = Resource.import_database(data_file)
+            #entity_file = Resource.file_statistics(data_file)
+            data_saved = import_schema(data_file)
             os.remove(filename_dir)
 
-            return make_response(jsonify(data_saved), 200)
+            return make_response(jsonify({'message': data_saved}), 201)
         else:
             return Response('File not found', status=404)
 
 
-@app.route('/upload_teacher', methods=['POST'])
-def upload_teacher():
+@app.route('/database', methods=['GET'])
+def download_database():
+    if request.method == 'GET':
+        return send_file(export_database(), cache_timeout=-1)
+    return make_response({'message': 'Value not found'}, 201)
+
+
+@app.route('/database', methods=['DELETE'])
+@token_required
+def delete_database(user):
+    if not user.isAdmin:
+        return make_response(jsonify({'message': 'Unauthorized User'}), 404)
+
+    areas = [area.delete() for area in KnowledgeArea.all()]
+    message = {'knowledgeArea': len(KnowledgeArea.all()),
+               'subject': len(Subject.all()),
+               'universityDegree': len(UniversityDegree.all()),
+               'teacher': len(Teacher.all()),
+               'pda': len(PDA.all()),
+               'tutorial': len(Tutorial.all())}
+    return make_response(jsonify({'message': message}), 201)
+
+
+@app.route('/database/teacher', methods=['POST'])
+@token_required
+def upload_teacher(user):
     if request.method == 'POST':
         # check if the post request has the file part
         try:
@@ -640,43 +638,31 @@ def upload_teacher():
             return make_response(jsonify({'message': 'Internal Server Error'}), 500)
 
 
-@app.route('/upload_pda', methods=['POST'])
-def upload_pda():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        try:
-            if 'file' not in request.files:
-                return ''
+@app.route('/database/pda', methods=['POST'])
+@token_required
+def upload_pda(user):
+    try:
+        if 'file' not in request.files:
+            return make_response(jsonify({'message': 'Data not found'}), 404)
 
-            request_file = request.files['file']
-            if request_file and allowed_file(request_file.filename):
-                filename = secure_filename(request_file.filename)
-                filename_dir = os.path.join(UPLOADS_DIR, filename)
-                request_file.save(filename_dir)
+        request_file = request.files['file']
+        if request_file and allowed_file(request_file.filename):
+            filename = secure_filename(request_file.filename)
+            filename_dir = os.path.join(UPLOADS_DIR, filename)
+            request_file.save(filename_dir)
 
-                data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
-                Resource.import_pda(data_file)
-                print(data_file)
-                os.remove(filename_dir)
+            data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+            message_pda = import_pda(data_file)
+            os.remove(filename_dir)
 
-                return make_response(jsonify({'message': 'saved'}), 201)
-            else:
-                return make_response(jsonify({'error': 'Not found'}), 404)
-        except Exception as error:
-            print(error)
-            return make_response(jsonify({'error': 'Internal server error'}), 500)
+            return make_response(jsonify({'message': message_pda}), 201)
+        else:
+            return make_response(jsonify({'message': 'Data not found'}), 404)
+    except Exception as error:
+        print(error)
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
 
 
-@app.route('/download_database', methods=['GET'])
-def download_database():
-    file_data = Resource.backup_database()
-    return send_file(file_data)
-
-
-@app.route('/export_database', methods=['GET'])
-def export_database():
-    file_data = Resource.export_database()
-    return send_file(file_data)
 
 
 '''
@@ -686,7 +672,7 @@ def export_database():
 
 @app.route('/knowledgeAreas', methods=['GET'])
 @token_required
-def get_knowledgeArea(user):
+def get_knowledge_area(user):
     return make_response(jsonify([area.to_dict() for area in KnowledgeArea.all()]), 201)
 
 
@@ -697,41 +683,39 @@ def get_knowledgeArea(user):
 
 @app.route('/veniaI', methods=['GET'])
 @token_required
-def get_all_veniaI(user):
+def get_all_venia1(user):
     return make_response(jsonify([venia.to_dict() for venia in VeniaI.all()]), 201)
 
 
 @app.route('/veniaI/<teacher_dni>', methods=['GET'])
 @token_required
-def get_veniaI(user, teacher_dni=None):
+def get_venia1(user, teacher_dni=None):
     teacher = Teacher.get(teacher_dni=teacher_dni)
     if not teacher:
         return make_response(jsonify({'message': 'Teacher not found'}), 201)
 
-    data = [build_dict(veniaI=venia.knowledgeArea) for venia in teacher.veniaI]
-    return make_response(jsonify(data), 201)
+    return make_response(jsonify([build_dict(veniaI=venia, area=venia.knowledgeArea) for venia in teacher.veniaI]), 201)
 
 
 @app.route('/veniaII', methods=['GET'])
 @token_required
-def get_all_veniaII(user):
+def get_all_venia2(user):
     return make_response(jsonify([venia.to_dict() for venia in VeniaII.all()]), 201)
 
 
 @app.route('/veniaII/<teacher_dni>', methods=['GET'])
 @token_required
-def get_veniaII(user, teacher_dni=None):
+def get_venia2(user, teacher_dni=None):
     teacher = Teacher.get(teacher_dni=teacher_dni)
     if not teacher:
         return make_response(jsonify({'message': 'Teacher not found'}), 201)
 
-    data = [build_dict(veniaII=venia.subject) for venia in teacher.veniaII]
-    return make_response(jsonify(data), 201)
+    return make_response(jsonify([build_dict(veniaII=venia, subject=venia.subject) for venia in teacher.veniaII]), 201)
 
 
 @app.route('/veniaI', methods=['POST'])
 @token_required
-def create_veniaI(user):
+def create_venia1(user):
     data = request.get_json()
     if data:
         area = KnowledgeArea.get(data['area_cod'])
@@ -748,7 +732,7 @@ def create_veniaI(user):
 
 @app.route('/veniaII', methods=['POST'])
 @token_required
-def create_veniaII(user):
+def create_venia2(user):
     data = request.get_json()
     if data:
         subject = Subject.get(subject_cod=data['subject_cod'], area_cod=data['area_cod'])
@@ -766,7 +750,7 @@ def create_veniaII(user):
 
 @app.route('/veniaI/<area_cod>/<teacher_dni>', methods=['PUT'])
 @token_required
-def update_veniaI(user, area_cod=None, teacher_dni=None):
+def update_venia1(user, area_cod=None, teacher_dni=None):
     if not area_cod and not teacher_dni:
         return make_response(jsonify({'message': 'teacher or Knowlegde Area not found'}), 404)
 
@@ -780,7 +764,7 @@ def update_veniaI(user, area_cod=None, teacher_dni=None):
 
 @app.route('/veniaII/<area_cod>/<subject_cod>/<teacher_dni>', methods=['PUT'])
 @token_required
-def update_veniaII(user, area_cod=None, subject_cod=None, teacher_dni=None):
+def update_venia2(user, area_cod=None, subject_cod=None, teacher_dni=None):
 
     data = request.get_json()
     if not area_cod or not subject_cod or not teacher_dni or not data:
