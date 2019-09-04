@@ -58,28 +58,6 @@ class Resource:
         return data
 
     @staticmethod
-    def import_teacher(data=None):
-        if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas tutorias', 'Cod Area'],
-                                      data.keys()):
-            return ''
-
-        for i in range(0, len(data['dni'])): # TODO - formatear nombres en minuculas y quitar espacio
-            if not data['dni'] and not data['nombre'] and not data['apellidos'] and not data['potencial'] \
-                    and not data['horas tutorias'] and data['Cod Area']:
-                continue
-
-            if Teacher.get(data['dni'][i]) is None:
-                area = KnowledgeArea.get(data['Cod Area'][i])
-                if area:
-                    teacher = Teacher(dni=data['dni'][i],
-                                      name=data['nombre'][i],
-                                      surnames=data['apellidos'][i],
-                                      potential=data['potencial'][i],
-                                      tutorial_hours=data['horas tutorias'][i],
-                                      area=area)
-                    teacher.save()
-
-    @staticmethod
     def file_statistics(data=None):
         if data:
             value = {key: len(set(data[key])) if None not in data[key] else 0 for key in data.keys()}
@@ -90,7 +68,8 @@ class Resource:
         return os.path.join(UPLOADS_DIR, filename)
 
 
-def export_database():
+def export_schema():
+    print('Ejecutando...')
     wb = Workbook()
     download_file = os.path.join(UPLOADS_DIR, 'database.xlsx') # TODO- add date to exit file
     sheet = wb.active
@@ -100,13 +79,30 @@ def export_database():
 
     count = 0
     for g in Group.all():
-        count += 1
-        print('Registro Nº: ', count)
-        row = ['201920', g.subject.university_cod, g.subject.university_degree.plan_cod,
-               g.subject.university_degree.special_cod, g.subject.subject_cod, g.group_cod, '', 'null',
-               g.subject.area_cod, 'null']
-        sheet.append(row)
-        wb.save(download_file)
+        impart = []
+        for i in g.teacher:
+            v = ''
+            teacher = i.teacher
+            if teacher.knowledgeArea is not g.subject.knowledgeArea:
+                area_cod = [v.area_cod for v in teacher.veniaI if v.approved]
+                subject = [{'subject_cod': v.subject_cod, 'area_cod': v.area_cod} for v in teacher.veniaII if v.approved]
+                v = 'Si 'if g.subject.area_cod in area_cod or \
+                            {'subject_cod': g.subject.subject_cod, 'area_cod': g.subject.area_cod} in subject else 'No'
+            impart.append({'dni': i.teacher_dni, 'hours': i.hours, 'venia': v})
+
+        if impart:
+            for i in impart:
+                row = ['201920', g.subject.university_cod, g.subject.university_degree.plan_cod,
+                       g.subject.university_degree.special_cod, g.subject.subject_cod, g.group_cod, i['dni'],
+                       i['hours'], g.subject.area_cod, i['venia']]
+                sheet.append(row)
+                wb.save(download_file)
+        else:
+            row = ['201920', g.subject.university_cod, g.subject.university_degree.plan_cod,
+                   g.subject.university_degree.special_cod, g.subject.subject_cod, g.group_cod, '', '',
+                   g.subject.area_cod, '']
+            sheet.append(row)
+            wb.save(download_file)
 
     return download_file
 
@@ -210,6 +206,27 @@ def build_dict(subject=None, group=None, teacher=None, area=None, university=Non
     output_dict.update(veniaII.to_dict()) if veniaII else output_dict
     return output_dict
 
+
+def import_teacher(data=None):
+    if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas tutorias', 'Cod Area'], data.keys()):
+        return ''
+
+    for i in range(0, len(data['dni'])): # TODO - formatear nombres en minuculas y quitar espacio
+        if not data['dni'] and not data['nombre'] and not data['apellidos'] and not data['potencial'] \
+                and not data['horas tutorias'] and data['Cod Area']:
+            continue
+
+        list_teacher = []
+        if not Teacher.get(data['dni'][i]):
+            area = KnowledgeArea.get(data['Cod Area'][i])
+            if area:
+                teacher = Teacher(dni=data['dni'][i], name=data['nombre'][i], surnames=data['apellidos'][i],
+                                  potential=data['potencial'][i], tutorial_hours=data['horas tutorias'][i],
+                                  area=area)
+                if teacher.save():
+                    list_teacher.append(teacher.to_dict())
+
+    return {'teachers': list_teacher, 'count': len(list_teacher)}
 
 def group_cover_hours(group=None):
     cover_hours = 0.

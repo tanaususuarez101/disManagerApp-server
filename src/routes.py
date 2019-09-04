@@ -592,7 +592,7 @@ def upload_database():
 @app.route('/database', methods=['GET'])
 def download_database():
     if request.method == 'GET':
-        return send_file(export_database(), cache_timeout=-1)
+        return send_file(export_schema(), cache_timeout=-1)
     return make_response({'message': 'Value not found'}, 201)
 
 
@@ -615,27 +615,28 @@ def delete_database(user):
 @app.route('/database/teacher', methods=['POST'])
 @token_required
 def upload_teacher(user):
-    if request.method == 'POST':
-        # check if the post request has the file part
-        try:
-            if 'file' not in request.files:
-                return make_response(jsonify({'message': 'File not found'}), 404)
+    try:
+        if 'file' not in request.files:
+            return make_response(jsonify({'message': 'File not found'}), 404)
 
-            request_file = request.files['file']
-            if request_file and allowed_file(request_file.filename):
-                filename = secure_filename(request_file.filename)
-                filename_dir = os.path.join(UPLOADS_DIR, filename)
-                request_file.save(filename_dir)
+        request_file = request.files['file']
+        if request_file and allowed_file(request_file.filename):
+            filename = secure_filename(request_file.filename)
+            filename_dir = os.path.join(UPLOADS_DIR, filename)
+            request_file.save(filename_dir)
 
-                data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
-                Resource.import_teacher(data_file)
-                os.remove(filename_dir)
+            data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+            message = import_teacher(data_file)
+            os.remove(filename_dir)
+            if message['count'] is 0:
+                return make_response(jsonify({'message': message}), 404)
+            return make_response(jsonify({'message': message}), 201)
 
-                return make_response(jsonify({'message': 'List teacher saved'}), 201)
-            else:
-                return make_response(jsonify({'message': 'File not found'}), 404)
-        except Exception as error:
-            return make_response(jsonify({'message': 'Internal Server Error'}), 500)
+        else:
+            return make_response(jsonify({'message': 'File not found'}), 404)
+
+    except Exception as error:
+        return make_response(jsonify({'message': 'Internal Server Error'}), 500)
 
 
 @app.route('/database/pda', methods=['POST'])
@@ -655,7 +656,10 @@ def upload_pda(user):
             message_pda = import_pda(data_file)
             os.remove(filename_dir)
 
+            if message_pda['count'] is 0:
+                return make_response(jsonify({'message': message_pda}), 404)
             return make_response(jsonify({'message': message_pda}), 201)
+
         else:
             return make_response(jsonify({'message': 'Data not found'}), 404)
     except Exception as error:

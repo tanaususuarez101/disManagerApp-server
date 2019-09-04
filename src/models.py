@@ -154,7 +154,7 @@ class VeniaII(db.Model):
 
     __table_args__ = (db.ForeignKeyConstraint([subject_cod, area_cod], ['subject.subject_cod', 'subject.area_cod']), {})
 
-    subject = db.relationship('Subject', back_populates='veniaII', )
+    subject = db.relationship('Subject', back_populates='veniaII')
     teacher = db.relationship('Teacher', back_populates='veniaII')
 
     def __init__(self, subject=None, teacher=None, status=None):
