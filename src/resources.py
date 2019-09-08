@@ -8,7 +8,15 @@ ALLOWED_COLUMNS = ['Curso_Academico', 'Cod Titulacion', 'Cod Plan', 'Cod Especia
                   'Cuatrimestre Asignatura', 'Tipo Asignatura', 'Cod Grupo', 'Tipo Grupo', 'Dni', 'Horas', 'Cod Area',
                   'Nombre Area', 'Venia']
 ALLOWED_KEYS = ['Cod Titulacion', 'Cod Asignatura', 'Cod Grupo', 'Cod Area']
+ALLOWED_EXTENSIONS = set(['xlsx'])
+
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def allowed_field(data=None):
@@ -79,28 +87,26 @@ def export_schema():
 
     count = 0
     for g in Group.all():
-        impart = []
+        impart, sub = [], g.subject
         for i in g.teacher:
-            v = ''
-            teacher = i.teacher
-            if teacher.knowledgeArea is not g.subject.knowledgeArea:
-                area_cod = [v.area_cod for v in teacher.veniaI if v.approved]
-                subject = [{'subject_cod': v.subject_cod, 'area_cod': v.area_cod} for v in teacher.veniaII if v.approved]
-                v = 'Si 'if g.subject.area_cod in area_cod or \
-                            {'subject_cod': g.subject.subject_cod, 'area_cod': g.subject.area_cod} in subject else 'No'
-            impart.append({'dni': i.teacher_dni, 'hours': i.hours, 'venia': v})
+            if i.approved:
+                v, teacher = '', i.teacher
+                if teacher.knowledgeArea is not sub.knowledgeArea:
+                    area_cod = [v.area_cod for v in teacher.veniaI if v.approved]
+                    subject = [{v.subject_cod, v.area_cod} for v in teacher.veniaII if v.approved]
+                    v = 'Si 'if sub.area_cod in area_cod or {sub.subject_cod, sub.area_cod} in subject else 'No'
+
+                impart.append({'dni': i.teacher_dni, 'hours': i.hours, 'venia': v})
 
         if impart:
             for i in impart:
-                row = ['201920', g.subject.university_cod, g.subject.university_degree.plan_cod,
-                       g.subject.university_degree.special_cod, g.subject.subject_cod, g.group_cod, i['dni'],
-                       i['hours'], g.subject.area_cod, i['venia']]
+                row = ['201920', sub.university_cod, sub.university_degree.plan_cod, sub.university_degree.special_cod,
+                       sub.subject_cod, g.group_cod, i['dni'], i['hours'], sub.area_cod, i['venia']]
                 sheet.append(row)
                 wb.save(download_file)
         else:
-            row = ['201920', g.subject.university_cod, g.subject.university_degree.plan_cod,
-                   g.subject.university_degree.special_cod, g.subject.subject_cod, g.group_cod, '', '',
-                   g.subject.area_cod, '']
+            row = ['201920', sub.university_cod, sub.university_degree.plan_cod, sub.university_degree.special_cod,
+                   sub.subject_cod, g.group_cod, '', '', sub.area_cod, '']
             sheet.append(row)
             wb.save(download_file)
 

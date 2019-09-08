@@ -284,7 +284,7 @@ class Group(db.Model):
     hours = db.Column(db.String(64))
 
     subject = db.relationship('Subject', back_populates='group')
-    teacher = db.relationship('Impart', back_populates='group')
+    teacher = db.relationship('Impart', back_populates='group', cascade="all,delete,delete-orphan")
 
     def __init__(self, subject=None, group_code=None, type=None, hours=None):
         self.subject = subject
@@ -395,7 +395,8 @@ class Teacher(db.Model):
 
     @staticmethod
     def get(teacher_dni=None):
-        return Teacher.query.get(teacher_dni)
+        if teacher_dni:
+            return Teacher.query.get(teacher_dni)
 
     def to_dict(self):
         return {'teacher_dni': self.dni, 'teacher_name': self.name, 'teacher_area_cod': self.area_cod,
@@ -599,7 +600,8 @@ class User(db.Model):
         if 'isAdmin' in data:
             self.isAdmin = data['isAdmin']
         if 'teacher_dni' in data:
-            self.teacher = Teacher.get(data['teacher_dni'])
+            self.teacher = Teacher.get(teacher_dni=data['teacher_dni'])
+
         return self
 
     @staticmethod
