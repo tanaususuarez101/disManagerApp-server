@@ -290,7 +290,6 @@ def create_coordinator(user):
                                                'message': 'Added new coordinator'})
 
             if 'responsible' in data.keys():
-
                 for obj in data['responsible']:
                     if contains_keys(['subject_cod', 'area_cod'], obj.keys()):
                         subject = Subject.get(obj['subject_cod'], obj['area_cod'])
@@ -433,8 +432,7 @@ def create_user():
             if user:
                 return make_response(jsonify({'message': 'User already exists'}), 301)
 
-            hashed_password = generate_password_hash(data['password'], method='sha256')
-            user = User(data['username'], hashed_password, data['admin'], str(uuid.uuid4()))
+            user = User(data['username'], generate_password(data), data['admin'], public_id())
 
             if 'dni' in data.keys() and data['dni']:
                 teacher = Teacher.get(data['dni'])

@@ -2,6 +2,7 @@ from src.models import *
 import os
 import openpyxl
 from openpyxl import Workbook
+import uuid
 
 ALLOWED_COLUMNS = ['Curso_Academico', 'Cod Titulacion', 'Cod Plan', 'Cod Especialidad', 'Acronimo Titulacion',
                   'Nombre Titulacion', 'Centro Imparticion', 'Cod Asignatura', 'Nombre Asignatura', 'Curso Asignatura',
@@ -217,22 +218,27 @@ def import_teacher(data=None):
     if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas tutorias', 'Cod Area'], data.keys()):
         return ''
 
+    list_teacher = []
     for i in range(0, len(data['dni'])): # TODO - formatear nombres en minuculas y quitar espacio
         if not data['dni'] and not data['nombre'] and not data['apellidos'] and not data['potencial'] \
                 and not data['horas tutorias'] and data['Cod Area']:
             continue
 
-        list_teacher = []
         if not Teacher.get(data['dni'][i]):
             area = KnowledgeArea.get(data['Cod Area'][i])
             if area:
                 teacher = Teacher(dni=data['dni'][i], name=data['nombre'][i], surnames=data['apellidos'][i],
                                   potential=data['potencial'][i], tutorial_hours=data['horas tutorias'][i],
                                   area=area)
-                if teacher.save():
+
+                password = {'password': 'prueba'}
+                user = User(str(data['dni'][i]), generate_password(password), False, public_id())
+                user.teacher = teacher
+                if user.save():
                     list_teacher.append(teacher.to_dict())
 
     return {'teachers': list_teacher, 'count': len(list_teacher)}
+
 
 def group_cover_hours(group=None):
     cover_hours = 0.
@@ -259,3 +265,12 @@ def contains_keys(list_keys=None, data_keys=None):
             if key not in data_keys:
                 return False
         return True
+
+
+def generate_password(data=None):
+    if data and 'password' in data:
+        return generate_password_hash(data['password'], method='sha256')
+
+
+def public_id():
+    return str(uuid.uuid4())
