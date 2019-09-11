@@ -1,5 +1,5 @@
-from flask import request, jsonify, Response, send_file, make_response
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask import request, jsonify, send_file, make_response
+from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 from src.resources import *
 from datetime import *
@@ -8,7 +8,6 @@ import json
 
 import jwt
 import os
-import uuid
 
 
 '''
@@ -38,6 +37,10 @@ def token_required(f):
     return decorated
 
 
+def response(data=None, status=201):
+    return make_response(jsonify(data), status)
+
+
 '''
  API RESTFULL
 '''
@@ -49,14 +52,13 @@ def get_all_teacher_load(user):
     try:
         list_teacher = []
         for teacher in Teacher.all():
-            cover_hours = group_cover_hours(teacher.group)
+            cover = group_cover_hours(teacher.group)
             dict_teacher = build_dict(teacher=teacher, area=teacher.knowledgeArea)
-            dict_teacher.update({'cover_hours': cover_hours})
-            dict_teacher.update({'unassigned_hours': float(cover_hours) - float(teacher.potential)})
+            dict_teacher.update({'cover_hours': cover, 'unassigned_hours': float(cover) - float(teacher.potential)})
             list_teacher.append(dict_teacher)
-        return make_response(jsonify(list_teacher), 201)
+        return response(list_teacher)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher_load/<dni>', methods=['GET'])
@@ -65,17 +67,16 @@ def get_teacher_load(user, dni=None):
     try:
         list_group, teacher = [], Teacher.get(dni)
         if not teacher:
-            return make_response(jsonify({'message': 'Techer not found'}), 404)
+            return response({'message': 'Techer not found'}, 404)
 
         for impart in teacher.group:
             output = build_dict(teacher=teacher, impart=impart, group=impart.group, subject=impart.group.subject,
                                 area=impart.group.subject.knowledgeArea, university=impart.group.subject.university_degree)
             output.update(teacher_cover_hours(impart.group))
             list_group.append(output)
-        return make_response(jsonify({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames,
-                                      'groups': list_group}), 201)
+        return response({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames, 'groups': list_group})
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher_load', methods=['POST'])
@@ -83,7 +84,7 @@ def get_teacher_load(user, dni=None):
 def create_teachers_loads(user):
     data = request.get_json()
     if not data:
-        return make_response(jsonify({'message': 'Data not found'}), 401)
+        return response({'message': 'Data not found'}, 401)
 
     try:
         for item in data:
@@ -92,9 +93,9 @@ def create_teachers_loads(user):
                 impart = Impart(group, user.teacher, item['impart_hours'])
                 impart.save()
 
-        return make_response(jsonify({'message': 'Data saved'}), 201)
+        return response({'message': 'Data saved'})
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher_load/<area_cod>/<subject_cod>/<group_cod>', methods=['DELETE'])
@@ -102,15 +103,15 @@ def create_teachers_loads(user):
 def delete_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None):
     try:
         if not area_cod or not subject_cod or not group_cod:
-            return make_response(jsonify({'message': 'Param not found'}), 404)
+            return response({'message': 'Param not found'}, 404)
 
         impart = Impart.get(group_cod, subject_cod, area_cod, user.teacher.dni)
         if impart.delete():
-            return make_response(jsonify({'message': 'Teacher load deleted successfully'}), 201)
+            return response({'message': 'Teacher load deleted successfully'}, 201)
 
-        return make_response(jsonify({'message': 'Teacher load delete error'}), 404)
+        return response({'message': 'Teacher load delete error'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher_load/<area_cod>/<subject_cod>/<group_cod>/<teacher_dni>', methods=['PUT'])
@@ -121,26 +122,25 @@ def update_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None, t
     try:
         data = request.get_json()
         if not area_cod and not subject_cod and not group_cod and not data:
-            return make_response(jsonify({'message': 'Param not found'}), 404)
+            return response({'message': 'Param not found'}, 404)
 
         dni = teacher_dni if teacher_dni else user.teacher.dni
         impart = Impart.get(area_cod=area_cod, subject_cod=subject_cod, group_cod=group_cod, teacher_dni=dni)
         impart.update(data)
         if impart.save():
-            return make_response(jsonify({'message': 'Teacher load update successfully'}), 201)
+            return response({'message': 'Teacher load update successfully'})
+        return response({'message': 'Teacher load update error'}, 404)
 
-        return make_response(jsonify({'message': 'Teacher load update error'}), 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher_load/request', methods=['GET'])
 def get_teacher_request():
     try:
-        return make_response(jsonify([build_dict(impart=impart, teacher=impart.teacher) for impart in Impart.all()]),
-                             201)
+        return response([build_dict(impart=impart, teacher=impart.teacher) for impart in Impart.all()], 201)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 '''
@@ -158,9 +158,9 @@ def get_groups(user):
                                     university=group.subject.university_degree)
             group_dict.update(teacher_cover_hours(group))
             subject_list.append(group_dict)
-        return make_response(jsonify(subject_list), 201)
+        return response(subject_list)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/groups/available', methods=['GET'])
@@ -179,9 +179,9 @@ def get_groups_available(user):
                 g_dict.update(teacher_cover_hours(g))
                 subject_list.append(g_dict)
 
-        return make_response(jsonify(subject_list), 201)
+        return response(subject_list)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/group/<area_cod>/<subject_cod>/<group_cod>', methods=['GET'])
@@ -200,11 +200,11 @@ def get_one_group(current_user, area_cod=None, subject_cod=None, group_cod=None)
             output_request = build_dict(subject=group.subject, university=group.subject.university_degree,
                                         area=group.subject.knowledgeArea, group=group)
             output_request.update({'teacher': teacher})
-            return make_response(jsonify(output_request), 201)
+            return response(output_request)
 
-        return make_response(jsonify({'error': 'Not found'}), 404)
+        return response({'error': 'Not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 '''
@@ -216,11 +216,10 @@ def get_one_group(current_user, area_cod=None, subject_cod=None, group_cod=None)
 @token_required
 def get_subjects(current_user):
     try:
-        output = [build_dict(university=subject.university_degree, area=subject.knowledgeArea, subject=subject)\
-                  for subject in Subject.all()]
-        return make_response(jsonify({'subject': output}), 201)
+        return response({'subject': [build_dict(university=subject.university_degree, area=subject.knowledgeArea,
+                                                subject=subject) for subject in Subject.all()]})
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/subject/pda', methods=['GET'])
@@ -234,19 +233,19 @@ def get_all_pda(current_user):
                 pda_dict = build_dict(pda=pda, university=subject.university_degree, subject=pda.subject,
                                       teacher=subject.coordinator, area=pda.subject.knowledgeArea)
                 list_pda.append(pda_dict)
-        return make_response(jsonify(list_pda), 201)
+        return response(list_pda, 201)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/subject/coordinator', methods=['GET'])
 @token_required
 def get_coordinator(user):
     try:
-        return make_response(jsonify([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea,
-                           teacher=sub.coordinator) for sub in Subject.all()]), 201)
+        return response([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea,
+                        teacher=sub.coordinator) for sub in Subject.all()])
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/subject/responsible', methods=['GET'])
@@ -254,10 +253,10 @@ def get_coordinator(user):
 def get_responsible(user):
 
     try:
-        return make_response(jsonify([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea,
-                                                 teacher=sub.responsible) for sub in Subject.all()]), 201)
+        return response([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea,
+                                    teacher=sub.responsible) for sub in Subject.all()])
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/subject/coordinator', methods=['POST'])
@@ -301,20 +300,20 @@ def create_coordinator(user):
                             data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
                                                'message': 'Added new responsible'})
 
-            return make_response(jsonify(data_infor), 201)
+            return response(data_infor)
 
-        return make_response(jsonify({'message': 'Have had any errors'}), 404)
+        return response({'message': 'Have had any errors'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/subjects/area/<area_cod>')
 @token_required
 def get_subjects_area(user, area_cod=None):
     try:
-        return make_response(jsonify([subject.to_dict() for subject in Subject.query.filter_by(area_cod=area_cod).all()]))
+        return response([subject.to_dict() for subject in Subject.query.filter_by(area_cod=area_cod).all()])
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 '''
@@ -343,20 +342,20 @@ def login():
                 teacher_dict = build_dict(teacher=user.teacher, area=user.teacher.knowledgeArea)
                 user_dict.update(teacher_dict)
 
-            return make_response(jsonify({'token': token.decode('UTF-8'), 'user': user_dict}))
+            return response({'token': token.decode('UTF-8'), 'user': user_dict})
 
         return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
-    except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+    except Exception as e:
+        return response({'message': e}, 500)
 
 
 @app.route('/currentUser', methods=['GET'])
 @token_required
 def get_currentuser(user):
     try:
-        return make_response(jsonify(user.to_dict()), 201)
+        return response(user.to_dict(), 201)
     except Exception as e:
-        return make_response(jsonify({'message': 'Server error internal'}), 500)
+        return response({'message': e}, 500)
 
 
 @app.route('/currentUser', methods=['PUT'])
@@ -366,11 +365,11 @@ def update_currentuser(current_user):
     if data:
         current_user.password = generate_password_hash(data['password'], method='sha256')
         if current_user.save():
-            return make_response(jsonify({'message': 'password success saved'}), 201)
+            return response({'message': 'password success saved'})
         else:
-            return make_response(jsonify({'message': 'data could not update'}), 401)
+            return response({'message': 'data could not update'}, 401)
     else:
-        return make_response(jsonify({'message': 'no data found'}), 401)
+        return response({'message': 'no data found'}, 401)
 
 
 @app.route('/user/<username>', methods=['GET'])
@@ -379,11 +378,11 @@ def get_user(user, username=None):
     u = User.get(username=username)
     if u:
         if u.teacher:
-            return make_response(jsonify(build_dict(user=u, teacher=u.teacher)), 201)
+            return response(build_dict(user=u, teacher=u.teacher))
         else:
-            return make_response(jsonify(build_dict(user=u)), 201)
+            return response(u.to_dict())
 
-    return make_response(jsonify({'message': 'User not found'}), 201)
+    return response({'message': 'User not found'}, 404)
 
 
 @app.route('/user/<username>', methods=['DELETE'])
@@ -391,12 +390,12 @@ def get_user(user, username=None):
 def remove_user(user, username=None):
     u = User.get(username=username)
     if not u or u.username in 'test':
-        return make_response(jsonify({'message': 'User not found'}), 404)
+        return response({'message': 'User not found'}, 404)
 
     if u.delete():
-        return make_response(jsonify({'message': 'User successfully removed'}), 201)
+        return response({'message': 'User successfully removed'})
 
-    return make_response(jsonify({'message': 'User not could delete'}), 401)
+    return response({'message': 'User not could delete'}, 401)
 
 
 @app.route('/user/<username>', methods=['PUT'])
@@ -405,21 +404,21 @@ def update_user(user, username=None):
     u = User.get(username=username)
     data = request.get_json()
     if not u or not data:
-        return make_response(jsonify({'message': 'User not found'}), 404)
+        return response({'message': 'User not found'}, 404)
 
     u.update(data)
     if u.save():
-        return make_response(jsonify({'message': 'User successfully update'}), 201)
+        return response({'message': 'User successfully update'})
 
-    return make_response(jsonify({'message': 'User not could update'}), 404)
+    return response({'message': 'User not could update'}, 404)
 
 
 @app.route('/users', methods=['GET'])
 def get_users():
     users = User.all()
     if users:
-        return make_response(jsonify([build_dict(user=user, teacher=user.teacher) for user in users]), 201)
-    return make_response(jsonify({'message': 'Users not found'}), 404)
+        return response([build_dict(user=user, teacher=user.teacher) for user in users])
+    return response({'message': 'Users not found'}, 404)
 
 
 @app.route('/sign-in', methods=['POST'])
@@ -430,7 +429,7 @@ def create_user():
         if data and contains_keys(['username', 'password', 'admin'], data.keys()):
             user = User.get(username=data['username'])
             if user:
-                return make_response(jsonify({'message': 'User already exists'}), 301)
+                return response({'message': 'User already exists'}, 301)
 
             user = User(data['username'], generate_password(data), data['admin'], public_id())
 
@@ -439,27 +438,27 @@ def create_user():
                 if teacher:
                     user.teacher = teacher
                     if user.save():
-                        return make_response(jsonify({'message': 'User and Teacher have been created!'}), 201)
+                        return response({'message': 'User and Teacher have been created!'})
                     else:
-                        return make_response(jsonify({'message': 'User and Teacher could not have been created!'}), 401)
+                        return response({'message': 'User and Teacher could not have been created!'}, 401)
 
                 if contains_keys(['name', 'surnames', 'potential', 'tutorial_hours', 'area_cod'], data.keys()):
                     area = KnowledgeArea.get(data['area_cod'])
                     if not area:
-                        return make_response(jsonify({'message': 'Knowledge Area could not been find'}), 404)
+                        return response({'message': 'Knowledge Area could not been find'}, 404)
 
                     teacher = Teacher(data['dni'], data['name'], data['surnames'], data['potential'], data['tutorial_hours']
                                       , area)
                     user.teacher = teacher
                     if teacher.save():
-                        return make_response(jsonify({'message': 'Teacher created'}), 201)
+                        return response({'message': 'Teacher created'})
             else:
                 if user.save():
-                    return make_response(jsonify({'message': 'User created'}), 201)
+                    return response({'message': 'User created'})
 
-        return make_response(jsonify({'message': 'User could not have been created!'}), 404)
+        return response({'message': 'User could not have been created!'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 '''
@@ -470,9 +469,9 @@ def create_user():
 @app.route('/teachers', methods=['GET'])
 def get_teachers():
     try:
-        return make_response(jsonify([teacher.to_dict() for teacher in Teacher.all()]), 201)
+        return response([teacher.to_dict() for teacher in Teacher.all()], 201)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/<dni>', methods=['GET'])
@@ -480,10 +479,10 @@ def get_teachers():
 def get_teacher(user, dni=None):
     try:
         if dni:
-            return make_response(jsonify(Teacher.get(dni).to_dict()), 201)
-        return make_response(jsonify({'message': 'Data not found'}), 404)
+            return response(Teacher.get(dni).to_dict())
+        return response({'message': 'Data not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/<dni>', methods=['PUT'])
@@ -492,17 +491,17 @@ def update_teacher(user, dni=None):
 
     try:
         if not request.get_json() and not dni:
-            return make_response(jsonify({'message': 'Data not found'}), 404)
+            return response({'message': 'Data not found'}, 404)
 
         teacher = Teacher.get(dni)
         if teacher:
             teacher.update(request.get_json())
             if teacher.save():
-                return make_response(jsonify({'message': 'User successfully update'}), 201)
+                return response({'message': 'User successfully update'})
 
-        return make_response(jsonify({'message': 'User not could update'}), 404)
+        return response({'message': 'User not could update'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/<dni>', methods=['DELETE'])
@@ -510,31 +509,31 @@ def update_teacher(user, dni=None):
 def remove_teacher(user, dni=None):
     try:
         if not dni:
-            return make_response(jsonify({'message': 'Teacher not found'}), 404)
+            return response({'message': 'Teacher not found'}, 404)
 
         if Teacher.get(dni).delete():
-            return make_response(jsonify({'message': 'Teacher successfully removed'}), 201)
+            return response({'message': 'Teacher successfully removed'})
 
-        return make_response(jsonify({'message': 'Teacher not could delete'}), 401)
+        return response({'message': 'Teacher not could delete'}, 401)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/tutorial', methods=['GET'])
 @token_required
 def get_tutorials(current_user):
     try:
-        list_tutorial, output = [], {}
+        tutorials = []
         for teacher in Teacher.all():
             if teacher.tutorial:
-                output = build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.knowledgeArea)
+                out = build_dict(teacher=teacher, tutorial=teacher.tutorial, area=teacher.knowledgeArea)
                 if teacher.tutorial.hours and teacher.tutorial_hours:
-                    output.update({'cover_hours': float(teacher.tutorial.hours)})
-                    output.update({'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
-                list_tutorial.append(output)
-        return make_response(jsonify(list_tutorial), 201)
+                    out.update({'cover_hours': float(teacher.tutorial.hours),
+                                'unassigned_hours': float(teacher.tutorial.hours) - float(teacher.tutorial_hours)})
+                tutorials.append(out)
+        return response(tutorials)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/tutorial/<dni>', methods=['GET'])
@@ -543,10 +542,10 @@ def get_teacher_tutorial(current_user, dni=None):
     try:
         teacher = Teacher.get(dni)
         if teacher and teacher.tutorial:
-            return make_response(jsonify(teacher.tutorial.to_dict()), 201)
-        return make_response(jsonify({'message': 'Data not found'}), 404)
+            return response(teacher.tutorial.to_dict())
+        return response({'message': 'Data not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/tutorial', methods=['POST'])
@@ -554,17 +553,16 @@ def get_teacher_tutorial(current_user, dni=None):
 def create_tutorial(current_user):
     try:
         data = request.get_json()
-
         if data:
             if not contains_keys(['first_semester', 'second_semester', 'hours'], data.keys()):
-                return make_response(jsonify({'message': 'data not found'}), 404)
+                return response({'message': 'data not found'}, 404)
 
             if not current_user.teacher_dni:
-                return make_response(jsonify({'message': 'User is not teacher'}), 404)
+                return response({'message': 'User is not teacher'}, 404)
 
             teacher = Teacher.get(current_user.teacher_dni)
             if not teacher:
-                return make_response(jsonify({'message': 'Teacher not found'}), 404)
+                return response({'message': 'Teacher not found'}, 404)
 
             if teacher.tutorial:
                 teacher.tutorial.delete()
@@ -572,11 +570,11 @@ def create_tutorial(current_user):
             teacher.tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
                                         second_semester=json.dumps(data['second_semester']), hours=data['hours'])
             if teacher.save():
-                return make_response(jsonify({'message': 'Tutorial has been saved'}), 201)
+                return response({'message': 'Tutorial has been saved'})
 
-        return make_response(jsonify({'message': 'Error saved data'}), 201)
+        return response({'message': 'Data not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/coordinator/<dni>', methods=['GET'])
@@ -586,10 +584,10 @@ def get_teacher_coordinator(user, dni=None):
         if dni:
             subject_all = Subject.query.filter_by(coordinator_dni=dni).all()
             responsible_list = [subject.to_dict() for subject in subject_all]
-            return make_response(jsonify(responsible_list), 201)
-        return make_response(jsonify({}), 404)
+            return response(responsible_list)
+        return response({}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/teacher/responsible/<dni>', methods=['GET'])
@@ -599,11 +597,10 @@ def get_teacher_responsible(user, dni=None):
         if dni:
             subject_all = Subject.query.filter_by(responsible_dni=dni).all()
             resp_subject = [subject.to_dict() for subject in subject_all]
-            return make_response(jsonify(resp_subject), 201)
-        return make_response(jsonify({}), 404)
+            return response(resp_subject)
+        return response({'message': 'Data not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
-
+        return response({'message': ex}, 500)
 
 
 '''
@@ -618,7 +615,7 @@ def upload_database():
             # check if the post request has the file part
             # try:
             if 'file' not in request.files:
-                return make_response(jsonify({'message': 'File not found'}), 404)
+                return response({'message': 'File not found'}, 404)
 
             request_file = request.files['file']
             if request_file and allowed_file(request_file.filename):
@@ -630,11 +627,11 @@ def upload_database():
                 data_saved = import_schema(data_file)
                 os.remove(filename_dir)
 
-                return make_response(jsonify({'message': data_saved}), 201)
+                return response({'message': data_saved})
             else:
-                return Response('File not found', status=404)
+                return response({'message': 'File not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/database', methods=['GET'])
@@ -642,9 +639,9 @@ def download_database():
     try:
         if request.method == 'GET':
             return send_file(export_schema(), cache_timeout=-1)
-        return make_response({'message': 'Value not found'}, 201)
+        return response({'message': 'Value not found'})
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/database', methods=['DELETE'])
@@ -652,7 +649,7 @@ def download_database():
 def delete_database(user):
     try:
         if not user.isAdmin:
-            return make_response(jsonify({'message': 'Unauthorized User'}), 404)
+            return response({'message': 'Unauthorized User'}, 404)
 
         areas = [area.delete() for area in KnowledgeArea.all()]
         message = {'knowledgeArea': len(KnowledgeArea.all()),
@@ -661,9 +658,9 @@ def delete_database(user):
                    'teacher': len(Teacher.all()),
                    'pda': len(PDA.all()),
                    'tutorial': len(Tutorial.all())}
-        return make_response(jsonify({'message': message}), 201)
+        return response({'message': message})
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/database/teacher', methods=['POST'])
@@ -671,26 +668,24 @@ def delete_database(user):
 def upload_teacher(user):
     try:
         if 'file' not in request.files:
-            return make_response(jsonify({'message': 'File not found'}), 404)
+            return response({'message': 'File not found'}, 404)
 
         request_file = request.files['file']
         if request_file and allowed_file(request_file.filename):
             filename = secure_filename(request_file.filename)
-            filename_dir = os.path.join(UPLOADS_DIR, filename)
-            request_file.save(filename_dir)
+            filename = Resource.join_file(filename)
+            request_file.save(filename)
 
-            data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+            data_file = Resource.openxlsx(filename)  # return value dictionary with column name
             message = import_teacher(data_file)
-            os.remove(filename_dir)
-            if message['count'] is 0:
-                return make_response(jsonify({'message': message}), 404)
-            return make_response(jsonify({'message': message}), 201)
+            os.remove(filename)
+            return response({'message': message})
 
         else:
-            return make_response(jsonify({'message': 'File not found'}), 404)
+            return response({'message': 'File not found'}, 404)
 
-    except Exception as error:
-        return make_response(jsonify({'message': 'Internal Server Error'}), 500)
+    except Exception as e:
+        return response({'message': e}, 500)
 
 
 @app.route('/database/pda', methods=['POST'])
@@ -698,29 +693,25 @@ def upload_teacher(user):
 def upload_pda(user):
     try:
         if 'file' not in request.files:
-            return make_response(jsonify({'message': 'Data not found'}), 404)
+            return response({'message': 'Data not found'}, 404)
 
         request_file = request.files['file']
         if request_file and allowed_file(request_file.filename):
             filename = secure_filename(request_file.filename)
-            filename_dir = os.path.join(UPLOADS_DIR, filename)
-            request_file.save(filename_dir)
+            filename = Resource.join_file(filename)
+            request_file.save(filename)
 
-            data_file = Resource.openxlsx(filename_dir)  # return value dictionary with column name
+            data_file = Resource.openxlsx(filename)  # return value dictionary with column name
             message_pda = import_pda(data_file)
-            os.remove(filename_dir)
+            os.remove(filename)
 
             if message_pda['count'] is 0:
-                return make_response(jsonify({'message': message_pda}), 404)
-            return make_response(jsonify({'message': message_pda}), 201)
-
+                return response({'message': message_pda}, 404)
+            return response({'message': message_pda})
         else:
-            return make_response(jsonify({'message': 'Data not found'}), 404)
-    except Exception as error:
-        print(error)
-        return make_response(jsonify({'error': 'Internal server error'}), 500)
-
-
+            return response({'message': 'Data not found'}, 404)
+    except Exception as e:
+        return response({'error': e}, 500)
 
 
 '''
@@ -732,13 +723,13 @@ def upload_pda(user):
 @token_required
 def get_knowledge_area(user):
     try:
-        return make_response(jsonify([area.to_dict() for area in KnowledgeArea.all()]), 201)
+        return response([area.to_dict() for area in KnowledgeArea.all()])
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 '''
-    VENIAS
+    Venias
 '''
 
 
@@ -746,9 +737,10 @@ def get_knowledge_area(user):
 @token_required
 def get_all_venia1(user):
     try:
-        return make_response(jsonify([venia.to_dict() for venia in VeniaI.all()]), 201)
+        return response([venia.to_dict() for venia in VeniaI.all()])
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
+
 
 @app.route('/veniaI/<teacher_dni>', methods=['GET'])
 @token_required
@@ -756,21 +748,20 @@ def get_venia1(user, teacher_dni=None):
     try:
         teacher = Teacher.get(teacher_dni=teacher_dni)
         if not teacher:
-            return make_response(jsonify({'message': 'Teacher not found'}), 201)
+            return response({'message': 'Teacher not found'})
+        return response([build_dict(veniaI=venia, area=venia.knowledgeArea) for venia in teacher.veniaI])
 
-        return make_response(jsonify([build_dict(veniaI=venia, area=venia.knowledgeArea) for venia in teacher.veniaI]),
-                             201)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/veniaII', methods=['GET'])
 @token_required
 def get_all_venia2(user):
     try:
-        return make_response(jsonify([venia.to_dict() for venia in VeniaII.all()]), 201)
+        return response([venia.to_dict() for venia in VeniaII.all()])
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/veniaII/<teacher_dni>', methods=['GET'])
@@ -778,33 +769,32 @@ def get_all_venia2(user):
 def get_venia2(user, teacher_dni=None):
     try:
         teacher = Teacher.get(teacher_dni=teacher_dni)
-        if not teacher:
-            return make_response(jsonify({'message': 'Teacher not found'}), 201)
+        if teacher:
+            return response([build_dict(veniaII=venia, subject=venia.subject) for venia in teacher.veniaII])
+        return response({'message': 'Teacher not found'})
 
-        return make_response(jsonify([build_dict(veniaII=venia, subject=venia.subject) for venia in teacher.veniaII]), 201)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/veniaI', methods=['POST'])
 @token_required
 def create_venia1(user):
-
     try:
         data = request.get_json()
         if data:
             area = KnowledgeArea.get(data['area_cod'])
             if not area:
-                return make_response(jsonify({'message': 'Knowledge area not found'}), 404)
+                return response({'message': 'Knowledge area not found'}, 404)
 
             venia = VeniaI(area=area, teacher=user.teacher)
             if venia.save():
-                return make_response(jsonify({'message': 'Create venia of type 1'}), 201)
-            return make_response(jsonify({'message': 'Venia of type 1 not could created'}), 404)
+                return response({'message': 'Create venia of type 1'})
+            return response({'message': 'Venia of type 1 not could created'})
 
-        return make_response(jsonify({'message': 'Data not found'}), 404)
+        return response({'message': 'Data not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/veniaII', methods=['POST'])
@@ -815,17 +805,17 @@ def create_venia2(user):
         if data:
             subject = Subject.get(subject_cod=data['subject_cod'], area_cod=data['area_cod'])
             if not subject:
-                return make_response(jsonify({'message': 'Subject not found'}), 404)
+                return response({'message': 'Subject not found'}, 404)
 
             venia = VeniaII(subject=subject, teacher=user.teacher)
             if venia.save():
-                return make_response(jsonify({'message': 'Create venia of type 2'}), 201)
+                return response({'message': 'Create venia of type 2'})
 
-            return make_response(jsonify({'message': 'Venia of type 1 not could created'}), 401)
+            return response({'message': 'Venia of type 1 not could created'}, 401)
 
-        return make_response(jsonify({'message': 'Data not found'}), 404)
+        return response({'message': 'Data not found'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/veniaI/<area_cod>/<teacher_dni>', methods=['PUT'])
@@ -833,16 +823,16 @@ def create_venia2(user):
 def update_venia1(user, area_cod=None, teacher_dni=None):
     try:
         if not area_cod and not teacher_dni:
-            return make_response(jsonify({'message': 'teacher or Knowlegde Area not found'}), 404)
+            return response({'message': 'teacher or Knowlegde Area not found'}, 404)
 
         impart = VeniaI.get(area_cod=area_cod, teacher_dni=teacher_dni)
         impart.update(request.get_json())
         if impart.save():
-            return make_response(jsonify({'message': 'Venia I update successfully'}), 201)
+            return response({'message': 'Venia I update successfully'})
 
-        return make_response(jsonify({'message': 'Venia I not could saved'}), 404)
+        return response({'message': 'Venia I not could saved'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)
 
 
 @app.route('/veniaII/<area_cod>/<subject_cod>/<teacher_dni>', methods=['PUT'])
@@ -852,12 +842,12 @@ def update_venia2(user, area_cod=None, subject_cod=None, teacher_dni=None):
     try:
         data = request.get_json()
         if not area_cod or not subject_cod or not teacher_dni or not data:
-            return make_response(jsonify({'message': 'teacher or subject not found'}), 404)
+            return response({'message': 'teacher or subject not found'}, 404)
 
         impart = VeniaII.get(area_cod=area_cod, subject_cod=subject_cod, teacher_dni=teacher_dni)
         impart.update(data)
         if impart.save():
-            return make_response(jsonify({'message': 'Venia II update successfully'}), 201)
-        return make_response(jsonify({'message': 'Venia II not could saved'}), 404)
+            return response({'message': 'Venia II update successfully'})
+        return response({'message': 'Venia II not could saved'}, 404)
     except Exception as ex:
-        return make_response(jsonify({'message': ex}), 500)
+        return response({'message': ex}, 500)

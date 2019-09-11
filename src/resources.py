@@ -52,18 +52,17 @@ class Resource:
         doc = openpyxl.load_workbook(filename)
         hoja = doc.get_sheet_by_name(str(doc.get_sheet_names()[0]))
 
-        data = {}
-        keys = []
-        havent_keys = True
+        data, keys, first_row = {}, [], True
+
         for row in hoja.rows:
-            if havent_keys and row[0].value and type(row[0].value) is str:
-                havent_keys = False
-                for i in range(0, len(row)):
-                    data[row[i].value] = []
-                    keys.append(row[i].value)
+            if first_row and row[0].value:
+                first_row = False
+                keys = [col.value.replace(' ', '_').lower() for col in row if col]
+                data = {key: [] for key in keys}
             else:
                 for i in range(0, len(row)):
                     data[keys[i]].append(row[i].value)
+        doc.close()
         return data
 
     @staticmethod
@@ -78,7 +77,6 @@ class Resource:
 
 
 def export_schema():
-    print('Ejecutando...')
     wb = Workbook()
     download_file = os.path.join(UPLOADS_DIR, 'database.xlsx') # TODO- add date to exit file
     sheet = wb.active
@@ -115,81 +113,77 @@ def export_schema():
 
 
 def import_schema(data=None):
+    message = {'subject': 0, 'degreeUniversity': 0, 'knowledgeArea': 0, 'groups': 0, 'row_log': []}
+    if data or allowed_field(data):
+        # TODO - Eliminar espacios y mayúsculas de las claves de 'data'
+        for i in range(0, len(data['curso_academico'])):
+            row_saved = False
+            if data['curso_academico'][i] is not '':
 
-        if data or allowed_field(data):
-            message = {'subject': 0, 'degreeUniversity': 0, 'knowledgeArea': 0, 'groups': 0, 'row_log': []}
+                '''
+                TÍTULOS UNIVERSITARIOS
+                '''
+                university = UniversityDegree.get(data['cod_titulacion'][i])
+                if not university:
+                    university = UniversityDegree(data['cod_titulacion'][i], data['nombre_titulacion'][i],
+                                                  data['cod_plan'][i], data['cod_especialidad'][i],
+                                                  data['acronimo_titulacion'][i], data['centro_imparticion'][i])
 
+                    if university.save():
+                        message['degreeUniversity'] += 1
+                        row_saved = True
 
-            # TODO - Eliminar espacios y mayúsculas de las claves de 'data'
+                '''
+                ÁREAS DE CONOCIMIENTOS
+                '''
+                area = KnowledgeArea.get(data['cod_area'][i])
+                if not area:
+                    area = KnowledgeArea(data['cod_area'][i], data['nombre_area'][i])
+                    if area.save():
+                        message['knowledgeArea'] += 1
+                        row_saved = True
 
-            for i in range(0, len(data['Curso_Academico'])):
-                row_saved = False
-                if data['Curso_Academico'][i] is not '':
+                '''
+                ASIGNATURAS
+                '''
 
-                    '''
-                    TÍTULOS UNIVERSITARIOS
-                    '''
-                    university = UniversityDegree.get(data['Cod Titulacion'][i])
-                    if not university:
-                        university = UniversityDegree(data['Cod Titulacion'][i], data['Nombre Titulacion'][i],
-                                                      data['Cod Plan'][i], data['Cod Especialidad'][i],
-                                                      data['Acronimo Titulacion'][i], data['Centro Imparticion'][i])
+                subject = Subject.get(data['cod_asignatura'][i], data['cod_area'][i])
+                if not subject:
+                    subject = Subject(data['cod_asignatura'][i], data['cod_area'][i], data['cod_titulacion'][i],
+                                      data['nombre_asignatura'][i], data['tipo_asignatura'][i],
+                                      data['cuatrimestre_asignatura'][i], data['curso_asignatura'][i],
+                                      data['curso_academico'][i])
+                    if subject.save():
+                        message['subject'] += 1
+                        row_saved = True
 
-                        if university.save():
-                            message['degreeUniversity'] += 1
-                            row_saved = True
+                '''
+                GRUPOS
+                '''
 
-                    '''
-                    ÁREAS DE CONOCIMIENTOS
-                    '''
-                    area = KnowledgeArea.get(data['Cod Area'][i])
-                    if not area:
-                        area = KnowledgeArea(data['Cod Area'][i], data['Nombre Area'][i])
-                        if area.save():
-                            message['knowledgeArea'] += 1
-                            row_saved = True
+                group = Group.get(data['cod_grupo'][i], data['cod_asignatura'][i], data['cod_area'][i])
+                if not group:
+                    group = Group(subject, data['cod_grupo'][i], data['tipo_grupo'][i], data['horas'][i])
+                    if group.save():
+                        message['groups'] += 1
+                        row_saved = True
 
-                    '''
-                    ASIGNATURAS
-                    '''
+                if row_saved:
+                    message['row_log'].append(build_dict(university=university, area=area, subject=subject,
+                                                         group=group))
 
-                    subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
-                    if not subject:
-                        subject = Subject(data['Cod Asignatura'][i], data['Cod Area'][i], data['Cod Titulacion'][i],
-                                          data['Nombre Asignatura'][i], data['Tipo Asignatura'][i],
-                                          data['Cuatrimestre Asignatura'][i], data['Curso Asignatura'][i],
-                                          data['Curso_Academico'][i])
-                        if subject.save():
-                            message['subject'] += 1
-                            row_saved = True
-
-                    '''
-                    GRUPOS
-                    '''
-
-                    group = Group.get(data['Cod Grupo'][i], data['Cod Asignatura'][i], data['Cod Area'][i])
-                    if not group:
-                        group = Group(subject, data['Cod Grupo'][i], data['Tipo Grupo'][i], data['Horas'][i])
-                        if group.save():
-                            message['groups'] += 1
-                            row_saved = True
-
-                    if row_saved:
-                        message['row_log'].append(build_dict(university=university, area=area, subject=subject,
-                                                             group=group))
-
-        return message
+    return message
 
 
 def import_pda(data=None):
-    if not data or (data and not contains_keys(['Cod Asignatura', 'Cod Area', 'Estado', 'Observaciones'], data.keys())):
+    if not data or (data and not contains_keys(['cod_asignatura', 'cod_area', 'estado', 'observaciones'], data.keys())):
         return ''
 
     PDAs = []
-    for i in range(0, len(data['Cod Asignatura'])):
-        subject = Subject.get(data['Cod Asignatura'][i], data['Cod Area'][i])
+    for i in range(0, len(data['cod_asignatura'])):
+        subject = Subject.get(data['cod_asignatura'][i], data['cod_area'][i])
         if subject:
-            pda = PDA(subject, data['Estado'][i], data['Observaciones'][i])
+            pda = PDA(subject, data['estado'][i], data['observaciones'][i])
             if pda.save():
                 PDAs.append(pda.to_dict())
 
@@ -215,20 +209,16 @@ def build_dict(subject=None, group=None, teacher=None, area=None, university=Non
 
 
 def import_teacher(data=None):
-    if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas tutorias', 'Cod Area'], data.keys()):
+    if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas_tutorias', 'cod_area'], data.keys()):
         return ''
 
     list_teacher = []
-    for i in range(0, len(data['dni'])): # TODO - formatear nombres en minuculas y quitar espacio
-        if not data['dni'] and not data['nombre'] and not data['apellidos'] and not data['potencial'] \
-                and not data['horas tutorias'] and data['Cod Area']:
-            continue
-
+    for i in range(0, len(data['dni'])):
         if not Teacher.get(data['dni'][i]):
-            area = KnowledgeArea.get(data['Cod Area'][i])
+            area = KnowledgeArea.get(data['cod_area'][i])
             if area:
                 teacher = Teacher(dni=data['dni'][i], name=data['nombre'][i], surnames=data['apellidos'][i],
-                                  potential=data['potencial'][i], tutorial_hours=data['horas tutorias'][i],
+                                  potential=data['potencial'][i], tutorial_hours=data['horas_tutorias'][i],
                                   area=area)
 
                 password = {'password': 'prueba'}
