@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 import json
 
+
 '''
     Entities Relationships 
 '''
@@ -59,13 +60,16 @@ class Impart(db.Model):
 
     def update(self, data):
 
-        if data and 'hours' in data:
-            self.hours = data['hours']
+        if not data:
+            return None
 
-        if data and 'approved' in data:
+        if 'impart_hours' in data:
+            self.hours = data['impart_hours']
+
+        if 'approved' in data:
             self.approved = data['approved']
             self.rejected = False
-        elif data and 'rejected' in data:
+        elif 'rejected' in data:
             self.approved = False
             self.rejected = data['rejected']
 
@@ -206,6 +210,7 @@ class VeniaII(db.Model):
             self.approved, 'rejected': self.rejected}
 
 
+
 '''
     Entities Models
 '''
@@ -332,6 +337,10 @@ class Teacher(db.Model):
     surnames = db.Column(db.String(64), nullable=True)
     area_cod = db.Column(db.String(64), db.ForeignKey('knowledgeArea.area_cod'), nullable=True)
     potential = db.Column(db.String(64), nullable=True)
+    doctorate = db.Column(db.String(64), nullable=True)
+    master = db.Column(db.String(64), nullable=True)
+    practices = db.Column(db.String(64), nullable=True)
+
     tutorial_hours = db.Column(db.String(64), nullable=True)
 
     group = db.relationship('Impart', back_populates='teacher', cascade="all,delete,delete-orphan")
@@ -341,13 +350,17 @@ class Teacher(db.Model):
     user = db.relationship('User', back_populates='teacher', cascade="all,delete,delete-orphan")
     tutorial = db.relationship('Tutorial', back_populates='teacher', uselist=False, cascade="all,delete,delete-orphan")
 
-    def __init__(self, dni=None, name=None, surnames=None, potential=None, tutorial_hours=None, area=None):
+    def __init__(self, dni=None, name=None, surnames=None, potential=None, tutorial_hours=None, area=None,
+                 doctorate=None, master=None, practices=None):
         self.dni = dni
         self.name = name
         self.surnames = surnames
-        self.potential = potential
         self.tutorial_hours = tutorial_hours
         self.knowledgeArea = area
+        self.potential = potential
+        self.doctorate = doctorate
+        self.master = master
+        self.practices = practices
 
     def save(self):
         try:
@@ -359,7 +372,6 @@ class Teacher(db.Model):
 
     def delete(self):
         try:
-            print(self.dni)
             for subject in Subject.query.filter_by(coordinator_dni=self.dni).all():
                 subject.coordinator = None
                 subject.save()
@@ -376,18 +388,27 @@ class Teacher(db.Model):
 
     def update(self, data=None):
 
-        if data and 'teacher_dni' in data:
+        if not data:
+            return None
+
+        if 'teacher_dni' in data:
             self.dni = data['teacher_dni']
-        if data and 'teacher_name' in data:
+        if 'teacher_name' in data:
             self.name = data['teacher_name']
-        if data and 'teacher_surnames' in data:
+        if 'teacher_surnames' in data:
             self.surnames = data['teacher_surnames']
-        if data and 'area_cod' in data:
+        if 'area_cod' in data:
             self.area_cod = data['area_cod']
-        if data and 'teacher_potential' in data:
-            self.potential = data['teacher_potential']
-        if data and 'tutorial_hours' in data:
+        if 'tutorial_hours' in data:
             self.tutorial_hours = data['tutorial_hours']
+        if 'teacher_potential' in data:
+            self.potential = data['teacher_potential']
+        if 'teacher_master' in data:
+            self.master = data['teacher_master']
+        if 'teacher_doctorate' in data:
+            self.doctorate = data['teacher_doctorate']
+        if 'teacher_practice' in data:
+            self.practices = data['teacher_practice']
 
     @staticmethod
     def all():
@@ -399,9 +420,15 @@ class Teacher(db.Model):
             return Teacher.query.get(teacher_dni)
 
     def to_dict(self):
+
+        other_teaching = 0.
+        other_teaching = other_teaching + float(self.master) if self.master else other_teaching
+        other_teaching = other_teaching + float(self.doctorate) if self.doctorate else other_teaching
+        other_teaching = other_teaching + float(self.practices) if self.practices else other_teaching
+
         return {'teacher_dni': self.dni, 'teacher_name': self.name, 'teacher_area_cod': self.area_cod,
                 'teacher_surnames': self.surnames, 'teacher_potential': self.potential, 'tutorial_hours':
-                    self.tutorial_hours}
+                    self.tutorial_hours, 'other_teaching': other_teaching}
 
 
 class KnowledgeArea(db.Model):

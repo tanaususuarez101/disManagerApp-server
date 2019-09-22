@@ -68,8 +68,7 @@ class Resource:
     @staticmethod
     def file_statistics(data=None):
         if data:
-            value = {key: len(set(data[key])) if None not in data[key] else 0 for key in data.keys()}
-            return value
+            return {key: len(set(data[key])) if None not in data[key] else 0 for key in data.keys()}
 
     @staticmethod
     def join_file(filename):
@@ -84,31 +83,32 @@ def export_schema():
     sheet.append(['Curso Acad.', 'Codigo Titulacion', 'Codigo Plan', 'Codigo Espec.', 'Codigo Asignatura.',
                   'Codigo Grupo', 'DNI (sin letra)', 'Num Horas', 'Codigo area.', 'Venia'])
 
-    count = 0
     for g in Group.all():
         impart, sub = [], g.subject
         for i in g.teacher:
             if i.approved:
-                v, teacher = '', i.teacher
-                if teacher.knowledgeArea is not sub.knowledgeArea:
-                    area_cod = [v.area_cod for v in teacher.veniaI if v.approved]
-                    subject = [{v.subject_cod, v.area_cod} for v in teacher.veniaII if v.approved]
-                    v = 'Si 'if sub.area_cod in area_cod or {sub.subject_cod, sub.area_cod} in subject else 'No'
 
+                '''
+                area_cod = [v.area_cod for v in teacher.veniaI if v.approved]
+                subject = [{v.subject_cod, v.area_cod} for v in teacher.veniaII if v.approved]
+                v = 'Si 'if sub.area_cod in area_cod or {sub.subject_cod, sub.area_cod} in subject else 'No'
+                '''
+                v = 'Sí' if i.teacher.knowledgeArea is not sub.knowledgeArea else 'No'
                 impart.append({'dni': i.teacher_dni, 'hours': i.hours, 'venia': v})
 
         if impart:
             for i in impart:
-                row = ['201920', sub.university_cod, sub.university_degree.plan_cod, sub.university_degree.special_cod,
-                       sub.subject_cod, g.group_cod, i['dni'], i['hours'], sub.area_cod, i['venia']]
+                row = [sub.academic_year, sub.university_cod, sub.university_degree.plan_cod,
+                       sub.university_degree.special_cod, sub.subject_cod, g.group_cod, i['dni'], i['hours'],
+                       sub.area_cod, i['venia']]
                 sheet.append(row)
                 wb.save(download_file)
         else:
-            row = ['201920', sub.university_cod, sub.university_degree.plan_cod, sub.university_degree.special_cod,
-                   sub.subject_cod, g.group_cod, '', '', sub.area_cod, '']
+            row = [sub.academic_year, sub.university_cod, sub.university_degree.plan_cod,
+                   sub.university_degree.special_cod, sub.subject_cod, g.group_cod, '', '', sub.area_cod, '']
             sheet.append(row)
             wb.save(download_file)
-
+    wb.close()
     return download_file
 
 
@@ -116,7 +116,7 @@ def import_schema(data=None):
     message = {'subject': 0, 'degreeUniversity': 0, 'knowledgeArea': 0, 'groups': 0, 'row_log': []}
     if data or allowed_field(data):
         # TODO - Eliminar espacios y mayúsculas de las claves de 'data'
-        for i in range(0, len(data['curso_academico'])):
+        for i in range(len(data['curso_academico'])):
             row_saved = False
             if data['curso_academico'][i] is not '':
 
@@ -179,8 +179,10 @@ def import_pda(data=None):
     if not data or (data and not contains_keys(['cod_asignatura', 'cod_area', 'estado', 'observaciones'], data.keys())):
         return ''
 
+    deletePDA = [pda.delete() for pda in PDA.all()]
+
     PDAs = []
-    for i in range(0, len(data['cod_asignatura'])):
+    for i in range(len(data['cod_asignatura'])):
         subject = Subject.get(data['cod_asignatura'][i], data['cod_area'][i])
         if subject:
             pda = PDA(subject, data['estado'][i], data['observaciones'][i])
@@ -190,36 +192,19 @@ def import_pda(data=None):
     return {'pda': PDAs, 'count': len(PDAs)}
 
 
-def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None, tutorial=None,
-               impart=None, veniaI=None, veniaII=None):
-
-    output_dict = {}
-    output_dict.update(teacher.to_dict()) if teacher else output_dict
-    output_dict.update(subject.to_dict()) if subject else output_dict
-    output_dict.update(group.to_dict()) if group else output_dict
-    output_dict.update(area.to_dict()) if area else output_dict
-    output_dict.update(university.to_dict()) if university else output_dict
-    output_dict.update(pda.to_dict()) if pda else output_dict
-    output_dict.update(user.to_dict()) if user else output_dict
-    output_dict.update(tutorial.to_dict()) if tutorial else output_dict
-    output_dict.update(impart.to_dict()) if impart else output_dict
-    output_dict.update(veniaI.to_dict()) if veniaI else output_dict
-    output_dict.update(veniaII.to_dict()) if veniaII else output_dict
-    return output_dict
-
-
 def import_teacher(data=None):
     if data and not contains_keys(['dni', 'nombre', 'apellidos', 'potencial', 'horas_tutorias', 'cod_area'], data.keys()):
         return ''
 
     list_teacher = []
-    for i in range(0, len(data['dni'])):
+    for i in range(len(data['dni'])):
         if not Teacher.get(data['dni'][i]):
             area = KnowledgeArea.get(data['cod_area'][i])
             if area:
                 teacher = Teacher(dni=data['dni'][i], name=data['nombre'][i], surnames=data['apellidos'][i],
                                   potential=data['potencial'][i], tutorial_hours=data['horas_tutorias'][i],
-                                  area=area)
+                                  area=area, doctorate=data['docencia_doctorado'][i], master=data['docencia_master'][i],
+                                  practices=data['practicas_externas'][i])
 
                 password = {'password': 'prueba'}
                 user = User(str(data['dni'][i]), generate_password(password), False, public_id())
@@ -230,13 +215,35 @@ def import_teacher(data=None):
     return {'teachers': list_teacher, 'count': len(list_teacher)}
 
 
-def group_cover_hours(group=None):
+def build_dict(subject=None, group=None, teacher=None, area=None, university=None, pda=None, user=None, tutorial=None,
+               impart=None, veniaI=None, veniaII=None):
+
+    output_dict = {}
+
+    output_dict.update(university.to_dict()) if university else output_dict
+    output_dict.update(tutorial.to_dict()) if tutorial else output_dict
+    output_dict.update(veniaII.to_dict()) if veniaII else output_dict
+    output_dict.update(teacher.to_dict()) if teacher else output_dict
+    output_dict.update(subject.to_dict()) if subject else output_dict
+    output_dict.update(impart.to_dict()) if impart else output_dict
+    output_dict.update(veniaI.to_dict()) if veniaI else output_dict
+    output_dict.update(group.to_dict()) if group else output_dict
+    output_dict.update(user.to_dict()) if user else output_dict
+    output_dict.update(area.to_dict()) if area else output_dict
+    output_dict.update(pda.to_dict()) if pda else output_dict
+
+    return output_dict
+
+
+def group_cover_hours(teacher=None):
     cover_hours = 0.
+    group = teacher.group
+    potential = teacher.potential
     if group:
         for impart in group:
             group = Group.get(impart.area_cod, impart.subject_cod, impart.group_cod)
             cover_hours += float(group.hours)
-    return cover_hours
+    return {'cover_hours': cover_hours, 'unassigned_hours': float(cover_hours) - float(potential)}
 
 
 def teacher_cover_hours(group=None):

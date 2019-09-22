@@ -9,7 +9,6 @@ import json
 import jwt
 import os
 
-
 '''
    decorator
 '''
@@ -52,10 +51,10 @@ def get_all_teacher_load(user):
     try:
         list_teacher = []
         for teacher in Teacher.all():
-            cover = group_cover_hours(teacher.group)
             dict_teacher = build_dict(teacher=teacher, area=teacher.knowledgeArea)
-            dict_teacher.update({'cover_hours': cover, 'unassigned_hours': float(cover) - float(teacher.potential)})
+            dict_teacher.update(group_cover_hours(teacher))
             list_teacher.append(dict_teacher)
+
         return response(list_teacher)
     except Exception as ex:
         return response({'message': ex}, 500)
@@ -71,7 +70,8 @@ def get_teacher_load(user, dni=None):
 
         for impart in teacher.group:
             output = build_dict(teacher=teacher, impart=impart, group=impart.group, subject=impart.group.subject,
-                                area=impart.group.subject.knowledgeArea, university=impart.group.subject.university_degree)
+                                area=impart.group.subject.knowledgeArea,
+                                university=impart.group.subject.university_degree)
             output.update(teacher_cover_hours(impart.group))
             list_group.append(output)
         return response({'teacher_name': teacher.name, 'teacher_surnames': teacher.surnames, 'groups': list_group})
@@ -85,15 +85,17 @@ def create_teachers_loads(user):
     data = request.get_json()
     if not data:
         return response({'message': 'Data not found'}, 401)
+    if not user.teacher:
+        return response({'message': 'User is not teacher'}, 401)
 
     try:
-        for item in data:
-            group = Group.get(item['area_cod'], item['subject_cod'], item['group_cod'])
-            if group:
-                impart = Impart(group, user.teacher, item['impart_hours'])
-                impart.save()
+        group = Group.get(data['area_cod'], data['subject_cod'], data['group_cod'])
+        if group:
+            impart = Impart(group, user.teacher, str(data['impart_hours']))
+            if impart.save():
+                return response({'message': impart.to_dict()})
+        return response({'message': 'Group not found'}, 404)
 
-        return response({'message': 'Data saved'})
     except Exception as ex:
         return response({'message': ex}, 500)
 
@@ -118,7 +120,6 @@ def delete_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None):
 @app.route('/teacher_load/<area_cod>/<subject_cod>/<group_cod>', methods=['PUT'])
 @token_required
 def update_teacher_load(user, area_cod=None, subject_cod=None, group_cod=None, teacher_dni=None):
-
     try:
         data = request.get_json()
         if not area_cod and not subject_cod and not group_cod and not data:
@@ -163,27 +164,6 @@ def get_groups(user):
         return response({'message': ex}, 500)
 
 
-@app.route('/groups/available', methods=['GET'])
-@token_required
-def get_groups_available(user):
-    try:
-        teacher = user.teacher
-        areas_codes = [venia.area_cod for venia in teacher.veniaI if venia.approved]
-        subjects = [{venia.area_cod, venia.subject_cod} for venia in teacher.veniaII if venia.approved]
-
-        subject_list = []
-        for g in Group.all():
-            if g.area_cod in areas_codes or {g.area_cod, g.subject_cod} in subjects or teacher.area_cod in g.area_cod:
-                g_dict = build_dict(subject=g.subject, group=g, area=g.subject.knowledgeArea,
-                                    university=g.subject.university_degree)
-                g_dict.update(teacher_cover_hours(g))
-                subject_list.append(g_dict)
-
-        return response(subject_list)
-    except Exception as ex:
-        return response({'message': ex}, 500)
-
-
 @app.route('/group/<area_cod>/<subject_cod>/<group_cod>', methods=['GET'])
 @token_required
 def get_one_group(current_user, area_cod=None, subject_cod=None, group_cod=None):
@@ -222,6 +202,19 @@ def get_subjects(current_user):
         return response({'message': ex}, 500)
 
 
+@app.route('/subject/<subject_cod>/<area_cod>', methods=['GET'])
+@token_required
+def get_subject(user, subject_cod=None, area_cod=None):
+
+    if not area_cod and not subject_cod:
+        return response({'message': 'Param not found'}, 404)
+
+    sub = Subject.get(subject_cod, area_cod)
+    if sub:
+        return response(sub.to_dict())
+    return response({'message': 'Subject not found'}, 404)
+
+
 @app.route('/subject/pda', methods=['GET'])
 @token_required
 def get_all_pda(current_user):
@@ -240,18 +233,59 @@ def get_all_pda(current_user):
 
 @app.route('/subject/coordinator', methods=['GET'])
 @token_required
-def get_coordinator(user):
+def get_coordinators(user):
     try:
         return response([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea,
-                        teacher=sub.coordinator) for sub in Subject.all()])
+                                    teacher=sub.coordinator) for sub in Subject.all()])
+    except Exception as ex:
+        return response({'message': ex}, 500)
+
+
+@app.route('/subject/coordinator/<dni>', methods=['GET'])
+@token_required
+def get_coordinator(user, dni=None):
+    try:
+        if not dni:
+            return response({'message': 'Param not found'}, 404)
+
+        subjects = Subject.query.filter_by(coordinator_dni=dni).all()
+        return response([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea)
+                         for sub in subjects])
+    except Exception as ex:
+        return response({'message': ex}, 500)
+
+
+@app.route('/subject/coordinator/<dni>', methods=['POST'])
+@token_required
+def create_coordinator(user, dni=None):
+    try:
+        data = request.get_json()
+        if not data and not dni:
+            return response({'message': 'Param not found'}, 404)
+
+        for sub in Subject.query.filter_by(coordinator_dni=dni).all():
+            sub.coordinator = None
+            sub.save()
+
+        teacher = Teacher.get(dni)
+        if teacher:
+            message = []
+            for value in data:
+                subject = Subject.get(value['subject_cod'], value['area_cod'])
+                if subject:
+                    subject.coordinator = teacher
+                    if subject.save():
+                        message.append({'subject': subject.to_dict()})
+            return response(message)
+
+        return response({'message': 'Have had any errors'}, 404)
     except Exception as ex:
         return response({'message': ex}, 500)
 
 
 @app.route('/subject/responsible', methods=['GET'])
 @token_required
-def get_responsible(user):
-
+def get_responsibles(user):
     try:
         return response([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea,
                                     teacher=sub.responsible) for sub in Subject.all()])
@@ -259,54 +293,51 @@ def get_responsible(user):
         return response({'message': ex}, 500)
 
 
-@app.route('/subject/coordinator', methods=['POST'])
+@app.route('/subject/responsible/<dni>', methods=['GET'])
 @token_required
-def create_coordinator(user):
+def get_responsible(user, dni=None):
+
+    try:
+        if not dni:
+            return response({'message': 'Param not found'}, 404)
+
+        subjects = Subject.query.filter_by(responsible_dni=dni).all()
+        return response([build_dict(subject=sub, university=sub.university_degree, area=sub.knowledgeArea)
+                         for sub in subjects])
+    except Exception as ex:
+        return response({'message': ex}, 500)
+
+
+@app.route('/subject/responsible/<dni>', methods=['POST'])
+@token_required
+def create_responsible(user, dni=None):
     try:
         data = request.get_json()
-        if data and user.teacher:
+        if not data and not dni:
+            return response({'message': 'Param not found'}, 404)
 
-            teacher = user.teacher
-            for sub in Subject.query.filter_by(coordinator_dni=teacher.dni).all():
-                sub.coordinator = None
-                sub.save()
+        for sub in Subject.query.filter_by(responsible_dni=dni).all():
+            sub.responsible = None
+            sub.save()
 
-            for sub in Subject.query.filter_by(responsible_dni=teacher.dni).all():
-                sub.responsible = None
-                sub.save()
+        teacher = Teacher.get(dni)
+        if teacher:
+            message = []
+            for value in data:
+                subject = Subject.get(value['subject_cod'], value['area_cod'])
+                if subject:
+                    subject.responsible = teacher
+                    if subject.save():
+                        message.append({'subject': subject.to_dict()})
 
-            data_infor = []
-            if 'coordinator' in data.keys():
-                for obj in data['coordinator']:
-                    if contains_keys(['subject_cod', 'area_cod'], obj.keys()):
-                        subject = Subject.get(obj['subject_cod'], obj['area_cod'])
-                        if subject.coordinator and subject.coordinator not in teacher:
-                            data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
-                                               'message': 'Error replacing coordinator'})
-                        subject.coordinator = teacher
-                        if subject.save():
-                            data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
-                                               'message': 'Added new coordinator'})
-
-            if 'responsible' in data.keys():
-                for obj in data['responsible']:
-                    if contains_keys(['subject_cod', 'area_cod'], obj.keys()):
-                        subject = Subject.get(obj['subject_cod'], obj['area_cod'])
-                        if subject.responsible and subject.responsible not in teacher:
-                            data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
-                                               'message': 'Error replacing coordinator'})
-                        subject.responsible = teacher
-                        if subject.save():
-                            data_infor.append({'subject_cod': obj['subject_cod'], 'area_cod': obj['area_cod'],
-                                               'message': 'Added new responsible'})
-
-            return response(data_infor)
-
+            return response(message)
         return response({'message': 'Have had any errors'}, 404)
     except Exception as ex:
         return response({'message': ex}, 500)
 
 
+
+# TODO - COMPROBAR QUE ESTE MÉTODO ESTÁ SIENDO USADO.
 @app.route('/subjects/area/<area_cod>')
 @token_required
 def get_subjects_area(user, area_cod=None):
@@ -334,7 +365,7 @@ def login():
             return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
         if check_password_hash(user.password, auth['password']):
-            token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow() + timedelta(minutes=30)},
+            token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow() + timedelta(minutes=60)},
                                app.config['SECRET_KEY'])
 
             user_dict = user.to_dict()
@@ -447,7 +478,8 @@ def create_user():
                     if not area:
                         return response({'message': 'Knowledge Area could not been find'}, 404)
 
-                    teacher = Teacher(data['dni'], data['name'], data['surnames'], data['potential'], data['tutorial_hours']
+                    teacher = Teacher(data['dni'], data['name'], data['surnames'], data['potential'],
+                                      data['tutorial_hours']
                                       , area)
                     user.teacher = teacher
                     if teacher.save():
@@ -479,7 +511,9 @@ def get_teachers():
 def get_teacher(user, dni=None):
     try:
         if dni:
-            return response(Teacher.get(dni).to_dict())
+            teacher = Teacher.get(dni)
+            if teacher:
+                return response(teacher.to_dict())
         return response({'message': 'Data not found'}, 404)
     except Exception as ex:
         return response({'message': ex}, 500)
@@ -488,14 +522,14 @@ def get_teacher(user, dni=None):
 @app.route('/teacher/<dni>', methods=['PUT'])
 @token_required
 def update_teacher(user, dni=None):
-
     try:
-        if not request.get_json() and not dni:
+        data=request.get_json()
+        if not data and not dni:
             return response({'message': 'Data not found'}, 404)
 
         teacher = Teacher.get(dni)
         if teacher:
-            teacher.update(request.get_json())
+            teacher.update(data)
             if teacher.save():
                 return response({'message': 'User successfully update'})
 
@@ -548,44 +582,27 @@ def get_teacher_tutorial(current_user, dni=None):
         return response({'message': ex}, 500)
 
 
-@app.route('/teacher/tutorial', methods=['POST'])
+@app.route('/teacher/tutorial/<teacher_dni>', methods=['POST'])
 @token_required
-def create_tutorial(current_user):
+def create_tutorial(current_user, teacher_dni):
     try:
         data = request.get_json()
-        if data:
-            if not contains_keys(['first_semester', 'second_semester', 'hours'], data.keys()):
-                return response({'message': 'data not found'}, 404)
+        if data and teacher_dni:
 
-            if not current_user.teacher_dni:
-                return response({'message': 'User is not teacher'}, 404)
-
-            teacher = Teacher.get(current_user.teacher_dni)
+            teacher = Teacher.get(teacher_dni)
             if not teacher:
                 return response({'message': 'Teacher not found'}, 404)
 
             if teacher.tutorial:
                 teacher.tutorial.delete()
 
-            teacher.tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
-                                        second_semester=json.dumps(data['second_semester']), hours=data['hours'])
+            tutorial = Tutorial(first_semester=json.dumps(data['first_semester']),
+                                second_semester=json.dumps(data['second_semester']), hours=data['hours'])
+            teacher.tutorial = tutorial
             if teacher.save():
                 return response({'message': 'Tutorial has been saved'})
 
         return response({'message': 'Data not found'}, 404)
-    except Exception as ex:
-        return response({'message': ex}, 500)
-
-
-@app.route('/teacher/coordinator/<dni>', methods=['GET'])
-@token_required
-def get_teacher_coordinator(user, dni=None):
-    try:
-        if dni:
-            subject_all = Subject.query.filter_by(coordinator_dni=dni).all()
-            responsible_list = [subject.to_dict() for subject in subject_all]
-            return response(responsible_list)
-        return response({}, 404)
     except Exception as ex:
         return response({'message': ex}, 500)
 
@@ -838,7 +855,6 @@ def update_venia1(user, area_cod=None, teacher_dni=None):
 @app.route('/veniaII/<area_cod>/<subject_cod>/<teacher_dni>', methods=['PUT'])
 @token_required
 def update_venia2(user, area_cod=None, subject_cod=None, teacher_dni=None):
-
     try:
         data = request.get_json()
         if not area_cod or not subject_cod or not teacher_dni or not data:
