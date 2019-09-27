@@ -3,7 +3,6 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 import json
 
-
 '''
     Entities Relationships 
 '''
@@ -87,130 +86,6 @@ class Impart(db.Model):
             self.teacher_dni, 'assigned_hours': self.hours, 'approved': self.approved, 'rejected': self.rejected}
 
 
-class VeniaI(db.Model):
-    __tablename__ = "veniaI"
-
-    area_cod = db.Column(db.String(64), db.ForeignKey('knowledgeArea.area_cod'), primary_key=True)
-    teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
-    approved = db.Column(db.Boolean)
-    rejected = db.Column(db.Boolean)
-
-    knowledgeArea = db.relationship('KnowledgeArea', back_populates='veniaI')
-    teacher = db.relationship('Teacher', back_populates='veniaI')
-
-    def __init__(self, area=None, teacher=None, status=None):
-        self.knowledgeArea = area
-        self.teacher = teacher
-        if status and 'approved' in status:
-            self.approved = status.approved
-            self.rejected = False
-        elif status and 'rejected' in status:
-            self.approved = False
-            self.rejected = status.rejected
-
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except IntegrityError:
-            db.session.rollback()
-            return False
-
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except IntegrityError:
-            db.session.rollback()
-            return False
-
-    def update(self, status=None):
-        if status and 'approved' in status:
-            self.approved = status['approved']
-            self.rejected = False
-        elif status and 'rejected' in status:
-            self.approved = False
-            self.rejected = status['rejected']
-
-    @staticmethod
-    def get(area_cod=None, teacher_dni=None):
-        return VeniaI.query.get([area_cod, teacher_dni])
-
-    @staticmethod
-    def all():
-        return VeniaI.query.all()
-
-    def to_dict(self):
-        return {'area_cod': self.area_cod, 'teacher_dni': self.teacher_dni, 'approved': self.approved,
-                'rejected': self.rejected}
-
-
-class VeniaII(db.Model):
-    __tablename__ = "veniaII"
-
-    area_cod = db.Column(db.String(64), primary_key=True)
-    subject_cod = db.Column(db.String(64), primary_key=True)
-    teacher_dni = db.Column(db.String(64), db.ForeignKey('teacher.dni'), primary_key=True)
-    approved = db.Column(db.Boolean)
-    rejected = db.Column(db.Boolean)
-
-    __table_args__ = (db.ForeignKeyConstraint([subject_cod, area_cod], ['subject.subject_cod', 'subject.area_cod']), {})
-
-    subject = db.relationship('Subject', back_populates='veniaII')
-    teacher = db.relationship('Teacher', back_populates='veniaII')
-
-    def __init__(self, subject=None, teacher=None, status=None):
-        self.subject = subject
-        self.teacher = teacher
-        if status and 'approved' in status:
-            self.approved = status['approved']
-            self.rejected = False
-        elif status and 'rejected' in status:
-            self.approved = False
-            self.rejected = status['rejected']
-
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except IntegrityError:
-            db.session.rollback()
-            return False
-
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except IntegrityError:
-            db.session.rollback()
-            return False
-
-    def update(self, status=None):
-        if status and 'approved' in status:
-            self.approved = status['approved']
-            self.rejected = False
-        elif status and 'rejected' in status:
-            self.approved = False
-            self.rejected = status['rejected']
-
-    @staticmethod
-    def get(area_cod=None, subject_cod=None, teacher_dni=None):
-        return VeniaII.query.get([area_cod, subject_cod, teacher_dni])
-
-    @staticmethod
-    def all():
-        return VeniaII.query.all()
-
-    def to_dict(self):
-        return {'subject_cod': self.subject_cod, 'area_cod': self.area_cod, 'teacher_dni': self.teacher_dni, 'approved':
-            self.approved, 'rejected': self.rejected}
-
-
-
 '''
     Entities Models
 '''
@@ -238,7 +113,6 @@ class Subject(db.Model):
     responsible = db.relationship('Teacher', foreign_keys=[responsible_dni])
     group = db.relationship('Group', back_populates="subject", cascade="all,delete,delete-orphan")
     PDA = db.relationship('PDA', back_populates="subject", uselist=False, cascade="all,delete,delete-orphan")
-    veniaII = db.relationship('VeniaII', back_populates='subject', cascade="all,delete,delete-orphan")
 
     def __init__(self, subject_cod=None, area_cod=None, university_cod=None, name=None, type=None, semestre=None,
                  course=None, academic_year=None):
@@ -345,8 +219,6 @@ class Teacher(db.Model):
 
     group = db.relationship('Impart', back_populates='teacher', cascade="all,delete,delete-orphan")
     knowledgeArea = db.relationship('KnowledgeArea', back_populates='teacher', uselist=False)
-    veniaI = db.relationship('VeniaI', back_populates='teacher', cascade="all,delete,delete-orphan")
-    veniaII = db.relationship('VeniaII', back_populates='teacher', cascade="all,delete,delete-orphan")
     user = db.relationship('User', back_populates='teacher', cascade="all,delete,delete-orphan")
     tutorial = db.relationship('Tutorial', back_populates='teacher', uselist=False, cascade="all,delete,delete-orphan")
 
@@ -439,8 +311,6 @@ class KnowledgeArea(db.Model):
 
     teacher = db.relationship('Teacher', back_populates='knowledgeArea', cascade="all,delete,delete-orphan")
     subject = db.relationship('Subject', back_populates="knowledgeArea", cascade="all,delete,delete-orphan")
-
-    veniaI = db.relationship('VeniaI', back_populates='knowledgeArea')
 
     def __init__(self, area_cod=None, name=None):
         self.area_cod = area_cod
