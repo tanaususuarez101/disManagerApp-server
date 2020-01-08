@@ -87,12 +87,6 @@ def export_schema():
         impart, sub = [], g.subject
         for i in g.teacher:
             if i.approved:
-
-                '''
-                area_cod = [v.area_cod for v in teacher.veniaI if v.approved]
-                subject = [{v.subject_cod, v.area_cod} for v in teacher.veniaII if v.approved]
-                v = 'Si 'if sub.area_cod in area_cod or {sub.subject_cod, sub.area_cod} in subject else 'No'
-                '''
                 v = 'Sí' if i.teacher.knowledgeArea is not sub.knowledgeArea else 'No'
                 impart.append({'dni': i.teacher_dni, 'hours': i.hours, 'venia': v})
 

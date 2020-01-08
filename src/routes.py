@@ -335,18 +335,6 @@ def create_responsible(user, dni=None):
     except Exception as ex:
         return response({'message': ex}, 500)
 
-
-
-# TODO - COMPROBAR QUE ESTE MÉTODO ESTÁ SIENDO USADO.
-@app.route('/subjects/area/<area_cod>')
-@token_required
-def get_subjects_area(user, area_cod=None):
-    try:
-        return response([subject.to_dict() for subject in Subject.query.filter_by(area_cod=area_cod).all()])
-    except Exception as ex:
-        return response({'message': ex}, 500)
-
-
 '''
     USER
 '''
@@ -365,7 +353,7 @@ def login():
             return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
         if check_password_hash(user.password, auth['password']):
-            token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow() + timedelta(minutes=60)},
+            token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow() + timedelta(minutes=59)},
                                app.config['SECRET_KEY'])
 
             user_dict = user.to_dict()
@@ -388,21 +376,6 @@ def get_currentuser(user):
     except Exception as e:
         return response({'message': e}, 500)
 
-
-@app.route('/currentUser', methods=['PUT'])
-@token_required
-def update_currentuser(current_user):
-    data = request.get_json()
-    if data:
-        current_user.password = generate_password_hash(data['password'], method='sha256')
-        if current_user.save():
-            return response({'message': 'password success saved'})
-        else:
-            return response({'message': 'data could not update'}, 401)
-    else:
-        return response({'message': 'no data found'}, 401)
-
-
 @app.route('/user/<username>', methods=['GET'])
 @token_required
 def get_user(user, username=None):
@@ -413,14 +386,14 @@ def get_user(user, username=None):
         else:
             return response(u.to_dict())
 
-    return response({'message': 'User not found'}, 404)
+    return response({'message': 'User not found'}, 400)
 
 
 @app.route('/user/<username>', methods=['DELETE'])
 @token_required
 def remove_user(user, username=None):
     u = User.get(username=username)
-    if not u or u.username in 'test':
+    if not u or u.username in 'admin':
         return response({'message': 'User not found'}, 404)
 
     if u.delete():
@@ -456,14 +429,11 @@ def get_users():
 def create_user():
     try:
         data = request.get_json()
-
         if data and contains_keys(['username', 'password', 'admin'], data.keys()):
             user = User.get(username=data['username'])
             if user:
                 return response({'message': 'User already exists'}, 301)
-
             user = User(data['username'], generate_password(data), data['admin'], public_id())
-
             if 'dni' in data.keys() and data['dni']:
                 teacher = Teacher.get(data['dni'])
                 if teacher:
@@ -607,30 +577,17 @@ def create_tutorial(current_user, teacher_dni):
         return response({'message': ex}, 500)
 
 
-@app.route('/teacher/responsible/<dni>', methods=['GET'])
-@token_required
-def get_teacher_responsible(user, dni=None):
-    try:
-        if dni:
-            subject_all = Subject.query.filter_by(responsible_dni=dni).all()
-            resp_subject = [subject.to_dict() for subject in subject_all]
-            return response(resp_subject)
-        return response({'message': 'Data not found'}, 404)
-    except Exception as ex:
-        return response({'message': ex}, 500)
-
-
 '''
    DATA BASES
 '''
 
 
 @app.route('/database', methods=['POST'])
-def upload_database():
+@token_required
+def upload_database(user):
     try:
-        if request.method == 'POST':
+        if user.isAdmin:
             # check if the post request has the file part
-            # try:
             if 'file' not in request.files:
                 return response({'message': 'File not found'}, 404)
 
@@ -654,9 +611,7 @@ def upload_database():
 @app.route('/database', methods=['GET'])
 def download_database():
     try:
-        if request.method == 'GET':
-            return send_file(export_schema(), cache_timeout=-1)
-        return response({'message': 'Value not found'})
+        return send_file(export_schema(), cache_timeout=-1)
     except Exception as ex:
         return response({'message': ex}, 500)
 
@@ -722,24 +677,10 @@ def upload_pda(user):
             message_pda = import_pda(data_file)
             os.remove(filename)
 
-            if message_pda['count'] is 0:
-                return response({'message': message_pda}, 404)
-            return response({'message': message_pda})
+            if 'count' in message_pda and message_pda['count']:
+                return response({'message': message_pda})
+            return response({'message': message_pda}, 404)
         else:
             return response({'message': 'Data not found'}, 404)
     except Exception as e:
         return response({'error': e}, 500)
-
-
-'''
-    Knowledge Area
-'''
-
-
-@app.route('/knowledgeAreas', methods=['GET'])
-@token_required
-def get_knowledge_area(user):
-    try:
-        return response([area.to_dict() for area in KnowledgeArea.all()])
-    except Exception as ex:
-        return response({'message': ex}, 500)

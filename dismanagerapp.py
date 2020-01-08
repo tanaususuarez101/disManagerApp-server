@@ -1,6 +1,6 @@
 from src import app, db
-#from src.models import  Tutorial
 from src.models import Subject, Teacher, Group, Impart, KnowledgeArea, PDA, UniversityDegree, User, Tutorial
+
 
 @app.shell_context_processor
 def make_shell_context():
@@ -15,8 +15,6 @@ def make_shell_context():
             'User': User,
             'Tutorial': Tutorial,
             }
-
-
 
 
 if __name__ == '__main__':
